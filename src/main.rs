@@ -60,16 +60,17 @@ fn init_repo(name: &str, bare: bool) -> Result<Repository> {
         )));
     }
 
-    let repo = match bare {
-        true => Repository::init_bare(name),
-        false => Repository::init(name),
+    let repo = if bare {
+        Repository::init_bare(name)
+    } else {
+        Repository::init(name)
     };
 
-    repo.map_err(|e| GitError::Git(e))
+    repo.map_err(GitError::Git)
 }
 
 fn delete_repo(name: &str) -> Result<()> {
-    std::fs::remove_dir_all(name).map_err(|e| GitError::FS(e))
+    std::fs::remove_dir_all(name).map_err(GitError::FS)
 }
 
 fn get_commits(repo: &Repository) -> Vec<String> {
@@ -82,7 +83,7 @@ fn get_commits(repo: &Repository) -> Vec<String> {
         out.push(b);
     }
 
-    return out;
+    out
 }
 
 fn testpage(_req: &mut Request) -> IronResult<Response> {
