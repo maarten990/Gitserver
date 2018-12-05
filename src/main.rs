@@ -3,91 +3,81 @@ extern crate iron;
 #[macro_use]
 extern crate router;
 extern crate mount;
+#[macro_use]
+extern crate serde_json;
 extern crate staticfile;
 extern crate url;
+#[macro_use]
+extern crate lazy_static;
+extern crate params;
 
 use git2::Repository;
 use iron::modifiers::Redirect;
 use iron::prelude::*;
 use iron::status;
 use mount::Mount;
+use params::{Params, Value};
 use staticfile::Static;
 use std::error;
 use std::fmt;
+use std::fs;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use url::Url;
 
-type Result<T> = std::result::Result<T, GitError>;
-
-#[derive(Debug)]
-enum GitError {
-    Git(git2::Error),
-    FS(io::Error),
+lazy_static! {
+    static ref CACHE: Mutex<APICache> = Mutex::new(APICache::new());
+    static ref REPO_DIR: PathBuf = PathBuf::from("./repositories");
 }
 
-impl fmt::Display for GitError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            GitError::Git(ref e) => e.fmt(f),
-            GitError::FS(ref e) => e.fmt(f),
+struct APICache {
+    repolist_dirty: bool,
+    repolist: String,
+}
+
+impl APICache {
+    fn new() -> APICache {
+        APICache {
+            repolist: "{}".to_owned(),
+            repolist_dirty: true,
         }
     }
 }
 
-impl error::Error for GitError {
-    fn description(&self) -> &str {
-        match *self {
-            GitError::Git(ref e) => e.description(),
-            GitError::FS(ref e) => e.description(),
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            GitError::Git(ref e) => Some(e),
-            GitError::FS(ref e) => Some(e),
-        }
-    }
-}
-
-/// Create a new repository in the current folder.
-fn init_repo(name: &str, bare: bool) -> Result<Repository> {
-    if Path::new(name).exists() {
-        return Err(GitError::FS(io::Error::new(
-            io::ErrorKind::AlreadyExists,
-            "Repository already exists",
-        )));
-    }
-
-    let repo = if bare {
-        Repository::init_bare(name)
+fn get_repositories(_req: &mut Request) -> IronResult<Response> {
+    let mut api = CACHE.lock().unwrap();
+    if api.repolist_dirty {
+        println!("Refreshing cache");
+        let repos = git::get_repositories(REPO_DIR.as_path()).unwrap_or_default();
+        api.repolist = json!({ "data": repos }).to_string();
+        api.repolist_dirty = false;
     } else {
-        Repository::init(name)
+        println!("Reusing cache");
+    }
+
+    Ok(Response::with((status::Ok, &api.repolist[..])))
+}
+
+fn create_repository(req: &mut Request) -> IronResult<Response> {
+    let map = req.get_ref::<Params>().unwrap();
+
+    let name = match map.find(&["name"]) {
+        Some(&Value::String(ref name)) => name,
+        _ => return Ok(Response::with(status::NotFound)),
     };
 
-    repo.map_err(GitError::Git)
-}
+    let mut repo_path = REPO_DIR.clone();
+    repo_path.push(name);
+    let success = git::create_repo(repo_path.as_path(), true).is_ok();
+    let resp = json!({"data": {"success": success}});
 
-fn delete_repo(name: &str) -> Result<()> {
-    std::fs::remove_dir_all(name).map_err(GitError::FS)
-}
-
-fn get_commits(repo: &Repository) -> Vec<String> {
-    let walk = repo.revwalk().unwrap();
-    let mut out: Vec<String> = Vec::new();
-
-    for id in walk {
-        let id = id.unwrap();
-        let b = String::from_utf8(Vec::from(id.as_bytes())).unwrap();
-        out.push(b);
+    if success {
+        let mut api = CACHE.lock().unwrap();
+        api.repolist_dirty = true;
     }
 
-    out
-}
-
-fn testpage(_req: &mut Request) -> IronResult<Response> {
-    Ok(Response::with((status::Ok, "Test page!")))
+    Ok(Response::with((status::Ok, resp.to_string())))
 }
 
 fn redirect_to_index(req: &mut Request) -> IronResult<Response> {
@@ -98,10 +88,10 @@ fn redirect_to_index(req: &mut Request) -> IronResult<Response> {
 }
 
 fn main() {
-    let _repo = match init_repo("test", false) {
-        Ok(repo) => repo,
-        Err(_) => Repository::open("test").unwrap(),
-    };
+    // ensure that the repo folder exists
+    if !REPO_DIR.exists() {
+        fs::create_dir_all(REPO_DIR.as_path()).unwrap();
+    }
 
     // The mounter for static files
     let mut mount = Mount::new();
@@ -111,48 +101,99 @@ fn main() {
     let router = router!(
 	root: get "/" => redirect_to_index,
         static_content: get "/*" => mount,
-        test: get "/test" => testpage,
+        repos: get "/get_repositories" => get_repositories,
+        create: post "/create_repository" => create_repository,
     );
 
     let _server = Iron::new(router).http("localhost:3000").unwrap();
 }
 
-#[cfg(test)]
-mod tests {
+mod git {
     use super::*;
 
-    #[test]
-    pub fn test_repo_creation() {
-        // create repo
-        let success = init_repo("foo_repo", false);
-        assert!(success.is_ok(), success.err());
+    type Result<T> = std::result::Result<T, GitError>;
 
-        // try to create a repo with the same name
-        let success = init_repo("foo_repo", true);
-        match success {
-            Ok(_) => assert!(false, "Repo should already exist."),
-            Err(GitError::Git(_)) => assert!(false, "Should be an FS error."),
-            Err(GitError::FS(_)) => assert!(true),
+    #[derive(Debug)]
+    pub enum GitError {
+        Git(git2::Error),
+        FS(io::Error),
+    }
+
+    impl fmt::Display for GitError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            match *self {
+                GitError::Git(ref e) => e.fmt(f),
+                GitError::FS(ref e) => e.fmt(f),
+            }
+        }
+    }
+
+    impl error::Error for GitError {
+        fn description(&self) -> &str {
+            match *self {
+                GitError::Git(ref e) => e.description(),
+                GitError::FS(ref e) => e.description(),
+            }
         }
 
-        // try to open the created repo
-        let repo = Repository::open("foo_repo");
-        assert!(repo.is_ok(), success.err());
-
-        // try to open a non-existant repo
-        let repo = Repository::open("quack quack");
-        assert!(repo.is_err());
-
-        // try to delete the repo
-        let success = delete_repo("foo_repo");
-        assert!(success.is_ok(), success.err());
-
-        // try to delete the repo again
-        let success = delete_repo("foo_repo");
-        match success {
-            Ok(_) => assert!(false, "Repo should not exist"),
-            Err(GitError::Git(_)) => assert!(false, "Should be an FS error."),
-            Err(GitError::FS(_)) => assert!(true),
+        fn cause(&self) -> Option<&error::Error> {
+            match *self {
+                GitError::Git(ref e) => Some(e),
+                GitError::FS(ref e) => Some(e),
+            }
         }
+    }
+
+    /// Create a new repository in the target folder.
+    pub fn create_repo(path: &Path, bare: bool) -> Result<Repository> {
+        if path.exists() {
+            return Err(GitError::FS(io::Error::new(
+                io::ErrorKind::AlreadyExists,
+                "Repository already exists",
+            )));
+        }
+
+        let repo = if bare {
+            Repository::init_bare(path)
+        } else {
+            Repository::init(path)
+        };
+
+        repo.map_err(GitError::Git)
+    }
+
+    /// Delete a repository from the target folder.
+    pub fn delete_repo(path: &Path) -> Result<()> {
+        fs::remove_dir_all(path).map_err(GitError::FS)
+    }
+
+    /// Return a list of git repository names in the target folder.
+    pub fn get_repositories(path: &Path) -> io::Result<Vec<String>> {
+        let mut out: Vec<String> = Vec::new();
+        for entry in fs::read_dir(path)? {
+            let path = entry?.path();
+            if path.is_dir() {
+                match path.file_name() {
+                    Some(name) => out.push(name.to_str().unwrap_or("").to_owned()),
+                    None => continue,
+                }
+            }
+        }
+
+        Ok(out)
+    }
+
+    /// Return a list of commit messages from a repository.
+    pub fn get_commit_messages(repo: &Repository) -> Vec<String> {
+        let walk = repo.revwalk().unwrap();
+        let mut out: Vec<String> = Vec::new();
+
+        for id in walk {
+            let id = id.unwrap();
+            let b = String::from_utf8(Vec::from(id.as_bytes())).unwrap();
+            out.push(b);
+        }
+
+        out
     }
 }
