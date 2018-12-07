@@ -48,12 +48,9 @@ impl APICache {
 fn get_repositories(_req: &mut Request) -> IronResult<Response> {
     let mut api = CACHE.lock().unwrap();
     if api.repolist_dirty {
-        println!("Refreshing cache");
         let repos = git::get_repositories(REPO_DIR.as_path()).unwrap_or_default();
         api.repolist = json!({ "data": repos }).to_string();
         api.repolist_dirty = false;
-    } else {
-        println!("Reusing cache");
     }
 
     Ok(Response::with((status::Ok, &api.repolist[..])))
@@ -70,6 +67,27 @@ fn create_repository(req: &mut Request) -> IronResult<Response> {
     let mut repo_path = REPO_DIR.clone();
     repo_path.push(name);
     let success = git::create_repo(repo_path.as_path(), true).is_ok();
+    let resp = json!({"data": {"success": success}});
+
+    if success {
+        let mut api = CACHE.lock().unwrap();
+        api.repolist_dirty = true;
+    }
+
+    Ok(Response::with((status::Ok, resp.to_string())))
+}
+
+fn delete_repository(req: &mut Request) -> IronResult<Response> {
+    let map = req.get_ref::<Params>().unwrap();
+
+    let name = match map.find(&["name"]) {
+        Some(&Value::String(ref name)) => name,
+        _ => return Ok(Response::with(status::NotFound)),
+    };
+
+    let mut repo_path = REPO_DIR.clone();
+    repo_path.push(name);
+    let success = git::delete_repo(repo_path.as_path()).is_ok();
     let resp = json!({"data": {"success": success}});
 
     if success {
@@ -103,6 +121,7 @@ fn main() {
         static_content: get "/*" => mount,
         repos: get "/get_repositories" => get_repositories,
         create: post "/create_repository" => create_repository,
+        delete: post "/delete_repository" => delete_repository,
     );
 
     let _server = Iron::new(router).http("localhost:3000").unwrap();
