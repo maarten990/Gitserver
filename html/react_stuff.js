@@ -30,6 +30,8 @@ class CreateRepository extends React.Component {
 
       error => alert("Error!");
 
+    // update the repo list
+    this.props.onSubmit();
     event.preventDefault();
   }
 
@@ -43,6 +45,38 @@ class CreateRepository extends React.Component {
   }
 }
 
+class DeleteButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {msg: ""};
+    this.deleteRepo = this.deleteRepo.bind(this);
+  }
+
+  deleteRepo() {
+    var formData = new FormData();
+    formData.append("name", this.props.name);
+
+    fetch("http://localhost:3000/delete_repository", {
+      method: "POST",
+      body: formData
+    })
+      .then(response => response.json())
+      .then(response => this.setState(
+        {msg: response.data.success ? "Succesfully deleted repository." : "Could not delete repository."})
+      ),
+
+      error => alert("Error!");
+    this.props.onClick();
+  }
+
+  render() {
+    const msg = this.state.msg;
+    return e("div", null,
+             e("button", {onClick: this.deleteRepo}, "Delete"),
+             e("div", null, msg));
+  }
+}
+
 class RepoList extends React.Component {
   constructor(props) {
     super(props);
@@ -51,9 +85,11 @@ class RepoList extends React.Component {
       error: null,
       names: []
     };
+
+    this.getFromRemote = this.getFromRemote.bind(this);
   }
 
-  componentDidMount() {
+  getFromRemote() {
     fetch("http://localhost:3000/get_repositories")
       .then(res => res.json())
       .then(result => {
@@ -68,7 +104,11 @@ class RepoList extends React.Component {
           isLoaded: true,
           error
         });
-      }
+      };
+  }
+
+  componentDidMount() {
+    this.getFromRemote();
   }
 
   render() {
@@ -82,13 +122,14 @@ class RepoList extends React.Component {
       list = e(
         "ul",
         null,
-        names.map(name => e("li", {key: name}, name))
+        names.map(name => e("li", {key: name}, name,
+                            e(DeleteButton, {name: name, onClick: this.getFromRemote})))
       );
     }
 
     return e("div", null,
              list,
-             e(CreateRepository));
+             e(CreateRepository, {onSubmit: this.getFromRemote}));
   }
 }
 
