@@ -1,6 +1,8 @@
 'use strict';
 
 const e = React.createElement;
+const BASE_URL = "http://localhost:3000/"
+const API_URL = BASE_URL + "api/"
 
 class CreateRepository extends React.Component {
   constructor(props) {
@@ -19,7 +21,7 @@ class CreateRepository extends React.Component {
     const name = this.state.name;
     var formData = new FormData();
     formData.append("name", name);
-    fetch("http://localhost:3000/create_repository", {
+    fetch(API_URL + "create_repository", {
       method: "POST",
       body: formData
     })
@@ -56,7 +58,7 @@ class DeleteButton extends React.Component {
     var formData = new FormData();
     formData.append("name", this.props.name);
 
-    fetch("http://localhost:3000/delete_repository", {
+    fetch(API_URL + "delete_repository", {
       method: "POST",
       body: formData
     })
@@ -90,7 +92,7 @@ class RepoList extends React.Component {
   }
 
   getFromRemote() {
-    fetch("http://localhost:3000/get_repositories")
+    fetch(API_URL + "get_repositories")
       .then(res => res.json())
       .then(result => {
         this.setState( {
@@ -122,7 +124,8 @@ class RepoList extends React.Component {
       list = e(
         "ul",
         null,
-        names.map(name => e("li", {key: name}, name,
+        names.map(name => e("li", {key: name},
+                            e("a", {href: "/repo/" + name}, name),
                             e(DeleteButton, {name: name, onClick: this.getFromRemote})))
       );
     }
