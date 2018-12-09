@@ -57,8 +57,10 @@ fn get_repositories(_req: &mut Request) -> IronResult<Response> {
 
 fn get_repository(req: &mut Request) -> IronResult<Response> {
     let path = req.url.path();
+    let mut repo_path = REPO_DIR.clone();
     let name = path.last().unwrap();
-    let repo = match Repository::open(name) {
+    repo_path.push(name);
+    let repo = match Repository::open(repo_path.as_path()) {
         Ok(repo) => repo,
         _ => return Ok(Response::with((status::NotFound, format!("No repository named {}", name)))),
     };
