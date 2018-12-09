@@ -1,8 +1,8 @@
 'use strict';
 
 const e = React.createElement;
-const BASE_URL = "http://localhost:3000/"
-const API_URL = BASE_URL + "api/"
+const BASE_URL = "http://localhost:3000/";
+const API_URL = BASE_URL + "api/";
 
 class CreateRepository extends React.Component {
   constructor(props) {
@@ -26,14 +26,13 @@ class CreateRepository extends React.Component {
       body: formData
     })
       .then(response => response.json())
-      .then(response => this.setState(
-        {msg: response.data.success ? "Succesfully created repository." : "Could not create repository."})
-      ),
+      .then(response => {
+        this.setState(
+        {msg: response.data.success ? "Succesfully created repository." : "Could not create repository."});
+        this.props.onSubmit();
+      })
+      .catch(() => console.log("Error: could not create repository."));
 
-      error => alert("Error!");
-
-    // update the repo list
-    this.props.onSubmit();
     event.preventDefault();
   }
 
@@ -63,12 +62,13 @@ class DeleteButton extends React.Component {
       body: formData
     })
       .then(response => response.json())
-      .then(response => this.setState(
-        {msg: response.data.success ? "Succesfully deleted repository." : "Could not delete repository."})
-      ),
-
-      error => alert("Error!");
-    this.props.onClick();
+      .then(response => {
+        this.setState(
+          {msg: response.data.success ? "Succesfully deleted repository." : "Could not delete repository."}
+        );
+        this.props.onClick();
+      })
+      .catch(() => console.log("Error: could not delete repository."));
   }
 
   render() {
@@ -93,20 +93,18 @@ class RepoList extends React.Component {
 
   getFromRemote() {
     fetch(API_URL + "get_repositories")
-      .then(res => res.json())
+      .then(result => result.json())
       .then(result => {
         this.setState( {
           isLoaded: true,
           names: result.data
         });
-      }),
-
-      error => {
+      })
+      .catch(() =>
         this.setState({
           isLoaded: true,
           error
-        });
-      };
+        }));
   }
 
   componentDidMount() {
