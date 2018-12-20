@@ -2,10 +2,8 @@ extern crate git2;
 extern crate iron;
 #[macro_use]
 extern crate router;
-extern crate mount;
 #[macro_use]
 extern crate serde_json;
-extern crate staticfile;
 extern crate url;
 #[macro_use]
 extern crate lazy_static;
