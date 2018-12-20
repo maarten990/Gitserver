@@ -14,10 +14,7 @@ extern crate params;
 use git2::Repository;
 use iron::prelude::*;
 use iron::status;
-use iron::middleware::Handler;
-use mount::Mount;
 use params::{Params, Value};
-use staticfile::Static;
 use std::error;
 use std::fmt;
 use std::fs;
@@ -55,19 +52,11 @@ fn get_repositories(_req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, &api.repolist[..])))
 }
 
-fn get_repository(req: &mut Request) -> IronResult<Response> {
-    let path = req.url.path();
-    let mut repo_path = REPO_DIR.clone();
-    let name = path.last().unwrap();
-    repo_path.push(name);
-    let repo = match Repository::open(repo_path.as_path()) {
-        Ok(repo) => repo,
-        _ => return Ok(Response::with((status::NotFound, format!("No repository named {}", name)))),
-    };
-
+fn get_commits(_req: &mut Request) -> IronResult<Response> {
     // TODO: add caching
+    let commits = json!({ "data": vec!("Test 1", "Test 2") }).to_string();
 
-    Ok(Response::with((status::Ok, format!("Hello from repository {:}", name))))
+    Ok(Response::with((status::Ok, &commits[..])))
 }
 
 fn create_repository(req: &mut Request) -> IronResult<Response> {
@@ -75,7 +64,12 @@ fn create_repository(req: &mut Request) -> IronResult<Response> {
 
     let name = match map.find(&["name"]) {
         Some(&Value::String(ref name)) => name,
-        _ => return Ok(Response::with((status::NotFound, "Could not create repository. Does it already exist?"))),
+        _ => {
+            return Ok(Response::with((
+                status::NotFound,
+                "Could not create repository. Does it already exist?",
+            )))
+        }
     };
 
     let mut repo_path = REPO_DIR.clone();
@@ -96,7 +90,12 @@ fn delete_repository(req: &mut Request) -> IronResult<Response> {
 
     let name = match map.find(&["name"]) {
         Some(&Value::String(ref name)) => name,
-        _ => return Ok(Response::with((status::NotFound, "Could not delete repository."))),
+        _ => {
+            return Ok(Response::with((
+                status::NotFound,
+                "Could not delete repository.",
+            )))
+        }
     };
 
     let mut repo_path = REPO_DIR.clone();
@@ -112,35 +111,50 @@ fn delete_repository(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, resp.to_string())))
 }
 
-fn get_routing_fn() -> impl Fn(&mut Request) -> IronResult<Response> {
-    // The router for api requests
-    let router = router!(
-        repo: get "/repo/*" => get_repository,
-        repos: get "/api/get_repositories" => get_repositories,
-        create: post "/api/create_repository" => create_repository,
-        delete: post "/api/delete_repository" => delete_repository,
-    );
+fn static_handler(req: &mut Request) -> IronResult<Response> {
+    let mut base_path = PathBuf::from("./html-client/build");
+    let mut components = req.url.path();
 
-    // The mounter for static files
-    let mut mount = Mount::new();
-    mount.mount("/", Static::new(Path::new("./html")));
+    // Return index.html from the root, or when visiting a /repo/name page
+    // where Javascript handles the routing.
+    if (components[0] == "") || (components[0] == "repo") {
+        components.clear();
+        components.push("index.html");
+    }
 
-    move |req: &mut Request| {
-        match mount.handle(req) {
-            Ok(resp) => Ok(resp),
-            Err(_) => router.handle(req),
-        }
+    // Convert each component of the url to a Path object and append it to the
+    // base path.
+    components.iter()
+              .map(Path::new)
+              .for_each(|p| base_path.push(p));
+
+    if base_path.exists() {
+        Ok(Response::with((status::Ok, base_path)))
+    } else {
+        Ok(Response::with((status::NotFound, "404")))
     }
 }
 
+// mount.mount("/", Static::new(Path::new("./html-client/build")));
 fn main() {
     // ensure that the repo folder exists
     if !REPO_DIR.exists() {
         fs::create_dir_all(REPO_DIR.as_path()).unwrap();
     }
 
-    let routing_fn = get_routing_fn();
-    let _server = Iron::new(routing_fn).http("localhost:3000").unwrap();
+    let router = router!(
+        // api calls
+        repos: get "/api/get_repositories" => get_repositories,
+        commits: get "/api/get_commits" => get_commits,
+        create: post "/api/create_repository" => create_repository,
+        delete: post "/api/delete_repository" => delete_repository,
+
+        // static file serving as fallback
+        root: get "/" => static_handler,
+        page: get "/*" => static_handler,
+    );
+
+    let _server = Iron::new(router).http("localhost:3001").unwrap();
 }
 
 mod git {
