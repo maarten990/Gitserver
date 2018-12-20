@@ -126,14 +126,12 @@ class RepoList extends React.Component {
       list = <div>Loading...</div>;
     } else {
       const names_list = names.map(
-        (name) => {
-          return (
+        name => (
             <li>
               <Link to={"/repo/" + name}>{name}</Link>
               <DeleteButton name={name} onClick={this.getFromRemote} />
             </li>
-          );
-        });
+        ));
       list = <ul>{names_list}</ul>;
     }
 
@@ -161,7 +159,7 @@ class CommitList extends React.Component {
   }
 
   getFromRemote() {
-    fetch(API_URL + "get_repository")
+    fetch(API_URL + "get_commits")
       .then(result => result.json())
       .then(result => {
         this.setState({
@@ -177,7 +175,7 @@ class CommitList extends React.Component {
   }
 
   componentDidMount() {
-    // this.getFromRemote();
+    this.getFromRemote();
   }
 
   render() {
@@ -188,7 +186,8 @@ class CommitList extends React.Component {
     } else if (!isLoaded) {
       list = <div>Loading commits for {repo_name} </div>;
     } else {
-      list = <div>Placeholder for {repo_name}...</div>;
+      const msg_list = messages.map(msg => <li> {msg} </li>)
+      list = <ul>{msg_list}</ul>;
     }
 
     return <div>{list}</div>;
@@ -198,7 +197,6 @@ class CommitList extends React.Component {
 const AppRouter = () => (
   <Router>
     <div>
-      <h2>Bleep Bloop</h2>
       <Route exact path="/" component={RepoList} />
       <Route path="/repo/:name" component={CommitList} />
     </div>
