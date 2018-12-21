@@ -1,20 +1,17 @@
 extern crate git2;
 extern crate iron;
-#[macro_use]
-extern crate router;
-#[macro_use]
-extern crate serde_json;
 extern crate url;
-#[macro_use]
-extern crate lazy_static;
 extern crate params;
+#[macro_use] extern crate lazy_static;
+#[macro_use] extern crate router;
+#[macro_use] extern crate serde_json;
+#[macro_use] extern crate failure;
 
+use failure::Error;
 use git2::Repository;
 use iron::prelude::*;
 use iron::status;
 use params::{Params, Value};
-use std::error;
-use std::fmt;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -158,46 +155,12 @@ fn main() {
 mod git {
     use super::*;
 
-    type Result<T> = std::result::Result<T, GitError>;
-
-    #[derive(Debug)]
-    pub enum GitError {
-        Git(git2::Error),
-        FS(io::Error),
-    }
-
-    impl fmt::Display for GitError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match *self {
-                GitError::Git(ref e) => e.fmt(f),
-                GitError::FS(ref e) => e.fmt(f),
-            }
-        }
-    }
-
-    impl error::Error for GitError {
-        fn description(&self) -> &str {
-            match *self {
-                GitError::Git(ref e) => e.description(),
-                GitError::FS(ref e) => e.description(),
-            }
-        }
-
-        fn cause(&self) -> Option<&error::Error> {
-            match *self {
-                GitError::Git(ref e) => Some(e),
-                GitError::FS(ref e) => Some(e),
-            }
-        }
-    }
+    type Result<T> = std::result::Result<T, Error>;
 
     /// Create a new repository in the target folder.
     pub fn create_repo(path: &Path, bare: bool) -> Result<Repository> {
         if path.exists() {
-            return Err(GitError::FS(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                "Repository already exists",
-            )));
+            return Err(format_err!("Repository already exists"));
         }
 
         let repo = if bare {
@@ -206,16 +169,16 @@ mod git {
             Repository::init(path)
         };
 
-        repo.map_err(GitError::Git)
+        Ok(repo?)
     }
 
     /// Delete a repository from the target folder.
     pub fn delete_repo(path: &Path) -> Result<()> {
-        fs::remove_dir_all(path).map_err(GitError::FS)
+        Ok(fs::remove_dir_all(path)?)
     }
 
     /// Return a list of git repository names in the target folder.
-    pub fn get_repositories(path: &Path) -> io::Result<Vec<String>> {
+    pub fn get_repositories(path: &Path) -> Result<Vec<String>> {
         let mut out: Vec<String> = Vec::new();
         for entry in fs::read_dir(path)? {
             let path = entry?.path();
