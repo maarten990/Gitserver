@@ -13,7 +13,6 @@ use iron::prelude::*;
 use iron::status;
 use params::{Params, Value};
 use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -49,7 +48,13 @@ fn get_repositories(_req: &mut Request) -> IronResult<Response> {
 
 fn get_commits(_req: &mut Request) -> IronResult<Response> {
     // TODO: add caching
-    let commits = json!({ "data": vec!("Test 1", "Test 2") }).to_string();
+    // TODO: add post argument
+
+    let mut repo_path = REPO_DIR.clone();
+    repo_path.push("foo");
+    let repo = Repository::open(repo_path).unwrap();
+    let msgs = git::get_commit_messages(&repo).unwrap();
+    let commits = json!({ "data": msgs }).to_string();
 
     Ok(Response::with((status::Ok, &commits[..])))
 }
@@ -174,7 +179,8 @@ mod git {
 
     /// Delete a repository from the target folder.
     pub fn delete_repo(path: &Path) -> Result<()> {
-        Ok(fs::remove_dir_all(path)?)
+        fs::remove_dir_all(path)?;
+        Ok(())
     }
 
     /// Return a list of git repository names in the target folder.
@@ -194,16 +200,13 @@ mod git {
     }
 
     /// Return a list of commit messages from a repository.
-    pub fn get_commit_messages(repo: &Repository) -> Vec<String> {
-        let walk = repo.revwalk().unwrap();
-        let mut out: Vec<String> = Vec::new();
+    pub fn get_commit_messages(repo: &Repository) -> Result<Vec<String>> {
+        let mut walk = repo.revwalk()?;
+        walk.push_head()?;
 
-        for id in walk {
-            let id = id.unwrap();
-            let b = String::from_utf8(Vec::from(id.as_bytes())).unwrap();
-            out.push(b);
-        }
-
-        out
+        Ok(walk.into_iter()
+               .filter_map(|id| id.and_then(|id| repo.find_commit(id)).ok())
+               .filter_map(|commit| commit.message().map(|msg| msg.to_owned()))
+               .collect())
     }
 }
