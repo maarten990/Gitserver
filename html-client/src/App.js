@@ -123,7 +123,7 @@ class RepoList extends React.Component {
     if (error) {
       list = <div>{error}</div>;
     } else if (!isLoaded) {
-      list = <div>Loading...</div>;
+      list = <ListPlaceholder />;
     } else {
       const names_list = names.map(
         name => (
@@ -184,7 +184,7 @@ class CommitList extends React.Component {
     if (error) {
       list = <div>{error.message}</div>;
     } else if (!isLoaded) {
-      list = <div>Loading commits for {repo_name} </div>;
+      list = <ListPlaceholder />;
     } else {
       const msg_list = messages.map(msg => <li> {msg} </li>)
       list = <ul>{msg_list}</ul>;
@@ -193,6 +193,15 @@ class CommitList extends React.Component {
     return <div>{list}</div>;
   }
 }
+
+const ListPlaceholder = () => (
+  <ul>
+    <li><span class="placeholder">placeholder text placeholder text</span></li>
+    <li><span class="placeholder">placeholder text placeholder text</span></li>
+    <li><span class="placeholder">placeholder text placeholder text</span></li>
+    <li><span class="placeholder">placeholder text placeholder text</span></li>
+  </ul>
+);
 
 const AppRouter = () => (
   <Router>
