@@ -154,7 +154,7 @@ fn main() {
         page: get "/*" => static_handler,
     );
 
-    let _server = Iron::new(router).http("localhost:3001").unwrap();
+    let _server = Iron::new(router).http("127.0.0.1:3001").unwrap();
 }
 
 mod git {
