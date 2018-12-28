@@ -35,6 +35,25 @@ impl APICache {
     }
 }
 
+fn get_post_string<'a>(req: &'a mut Request, keys: &[&str]) -> Option<&'a String> {
+    let map = req.get_ref::<Params>().unwrap();
+    match map.find(keys) {
+        Some(value) => {
+            match *value {
+                Value::String(ref name) => Some(name),
+                _ => None,
+            }
+        }
+        None => None,
+    }
+}
+
+fn get_repository(name: &str) -> Option<Repository> {
+    let mut repo_path = REPO_DIR.clone();
+    repo_path.push(name);
+    Repository::open(repo_path).ok()
+}
+
 fn get_repositories(_req: &mut Request) -> IronResult<Response> {
     let mut api = CACHE.lock().unwrap();
     if api.repolist_dirty {
@@ -46,34 +65,33 @@ fn get_repositories(_req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, &api.repolist[..])))
 }
 
-fn get_commits(_req: &mut Request) -> IronResult<Response> {
+fn get_commits(req: &mut Request) -> IronResult<Response> {
     // TODO: add caching
-    // TODO: add post argument
 
-    let mut repo_path = REPO_DIR.clone();
-    repo_path.push("foo");
-    let repo = Repository::open(repo_path).unwrap();
-    let msgs = git::get_commit_messages(&repo).unwrap();
-    let commits = json!({ "data": msgs }).to_string();
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
+    };
 
-    Ok(Response::with((status::Ok, &commits[..])))
+    let commits = get_repository(repo_name)
+        .map(|repo| git::get_commit_messages(&repo).ok())
+        .map(|msgs| json!({ "data": msgs }))
+        .map(|js| js.to_string());
+
+    match commits {
+        Some(commits) => Ok(Response::with((status::Ok, &commits[..]))),
+        None => Ok(Response::with((status::InternalServerError, "Could not obtain commit messages"))),
+    }
 }
 
 fn create_repository(req: &mut Request) -> IronResult<Response> {
-    let map = req.get_ref::<Params>().unwrap();
-
-    let name = match map.find(&["name"]) {
-        Some(&Value::String(ref name)) => name,
-        _ => {
-            return Ok(Response::with((
-                status::NotFound,
-                "Could not create repository. Does it already exist?",
-            )))
-        }
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
     };
 
     let mut repo_path = REPO_DIR.clone();
-    repo_path.push(name);
+    repo_path.push(repo_name);
     let success = git::create_repo(repo_path.as_path(), true).is_ok();
     let resp = json!({"data": {"success": success}});
 
@@ -86,20 +104,13 @@ fn create_repository(req: &mut Request) -> IronResult<Response> {
 }
 
 fn delete_repository(req: &mut Request) -> IronResult<Response> {
-    let map = req.get_ref::<Params>().unwrap();
-
-    let name = match map.find(&["name"]) {
-        Some(&Value::String(ref name)) => name,
-        _ => {
-            return Ok(Response::with((
-                status::NotFound,
-                "Could not delete repository.",
-            )))
-        }
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
     };
 
     let mut repo_path = REPO_DIR.clone();
-    repo_path.push(name);
+    repo_path.push(repo_name);
     let success = git::delete_repo(repo_path.as_path()).is_ok();
     let resp = json!({"data": {"success": success}});
 

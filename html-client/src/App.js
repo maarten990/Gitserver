@@ -159,9 +159,15 @@ class CommitList extends React.Component {
   }
 
   getFromRemote() {
-    fetch(API_URL + "get_commits")
+    const repo_name = this.state.repo_name;
+
+    fetch(API_URL + `get_commits?name=${repo_name}`)
       .then(result => result.json())
       .then(result => {
+        // in case a lack of commit messages gets encoded as null
+        if (result.data === null) {
+          result.data = [];
+        }
         this.setState({
           isLoaded: true,
           messages: result.data
