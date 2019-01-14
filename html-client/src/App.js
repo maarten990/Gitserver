@@ -211,8 +211,8 @@ const ListPlaceholder = () => (
 
 const AppRouter = () => (
   <Router>
-    <div>
-      <Route exact path="/" component={RepoList} />
+    <div className="main-layout">
+      <Route path="/" component={RepoList} />
       <Route path="/repo/:name" component={CommitList} />
     </div>
   </Router>

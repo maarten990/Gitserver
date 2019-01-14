@@ -3,3 +3,7 @@
   background-color: WhiteSmoke;
   line-height: 75%;
 }
+
+.main-layout {
+  display: flex;
+}
