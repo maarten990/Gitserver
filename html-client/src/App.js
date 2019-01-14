@@ -126,8 +126,8 @@ class RepoList extends React.Component {
       list = <ListPlaceholder />;
     } else {
       const names_list = names.map(
-        name => (
-            <li>
+        (name, i) => (
+            <li key={i.toString()}>
               <Link to={"/repo/" + name}>{name}</Link>
               <DeleteButton name={name} onClick={this.getFromRemote} />
             </li>
@@ -185,14 +185,14 @@ class CommitList extends React.Component {
   }
 
   render() {
-    const { isLoaded, error, messages, repo_name } = this.state;
+    const { isLoaded, error, messages, _ } = this.state;
     var list;
     if (error) {
       list = <div>{error.message}</div>;
     } else if (!isLoaded) {
       list = <ListPlaceholder />;
     } else {
-      const msg_list = messages.map(msg => <li> {msg} </li>)
+      const msg_list = messages.map((msg, i) => <li key={i.toString()}> {msg} </li>)
       list = <ul>{msg_list}</ul>;
     }
 
@@ -202,10 +202,10 @@ class CommitList extends React.Component {
 
 const ListPlaceholder = () => (
   <ul>
-    <li><span class="placeholder">placeholder text placeholder text</span></li>
-    <li><span class="placeholder">placeholder text placeholder text</span></li>
-    <li><span class="placeholder">placeholder text placeholder text</span></li>
-    <li><span class="placeholder">placeholder text placeholder text</span></li>
+    <li><span className="placeholder">placeholder text placeholder text</span></li>
+    <li><span className="placeholder">placeholder text placeholder text</span></li>
+    <li><span className="placeholder">placeholder text placeholder text</span></li>
+    <li><span className="placeholder">placeholder text placeholder text</span></li>
   </ul>
 );
 
