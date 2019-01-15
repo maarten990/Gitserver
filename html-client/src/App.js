@@ -1,138 +1,138 @@
-import React  from 'react';
-import './App.css';
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import React from 'react'
+import './App.css'
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
 
-const API_URL = "/api/";
+const API_URL = '/api/'
 
 class CreateRepository extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { name: "", msg: "" }
+  constructor (props) {
+    super(props)
+    this.state = { name: '', msg: '' }
 
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChange = this.handleChange.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
-  handleChange(event) {
-    this.setState({ name: event.target.value });
+  handleChange (event) {
+    this.setState({ name: event.target.value })
   }
 
-  handleSubmit(event) {
-    const name = this.state.name;
-    var formData = new FormData();
-    formData.append("name", name);
-    fetch(API_URL + "create_repository", {
-      method: "POST",
+  handleSubmit (event) {
+    const name = this.state.name
+    var formData = new window.FormData()
+    formData.append('name', name)
+    window.fetch(API_URL + 'create_repository', {
+      method: 'POST',
       body: formData
     })
       .then(response => response.json())
       .then(response => {
         this.setState(
-          { msg: response.data.success ? "Succesfully created repository." : "Could not create repository." });
-        this.props.onSubmit();
+          { msg: response.data.success ? 'Succesfully created repository.' : 'Could not create repository.' })
+        this.props.onSubmit()
       })
-      .catch(() => this.setState({msg: "Could not contact server"}));
+      .catch(() => this.setState({ msg: 'Could not contact server' }))
 
-    event.preventDefault();
+    event.preventDefault()
   }
 
-  render() {
-    const { name, msg } = this.state;
+  render () {
+    const { name, msg } = this.state
     return (
       <form onSubmit={this.handleSubmit}>
         <label>Name: </label>
-        <input type="text" value={name} onChange={this.handleChange}/>
-        <input type="submit" value="Create new"/>
+        <input type='text' value={name} onChange={this.handleChange} />
+        <input type='submit' value='Create new' />
         <label>{msg}</label>
       </form>
-    );
+    )
   }
 }
 
 class DeleteButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { msg: "" };
-    this.deleteRepo = this.deleteRepo.bind(this);
+  constructor (props) {
+    super(props)
+    this.state = { msg: '' }
+    this.deleteRepo = this.deleteRepo.bind(this)
   }
 
-  deleteRepo() {
-    var formData = new FormData();
-    formData.append("name", this.props.name);
+  deleteRepo () {
+    var formData = new window.FormData()
+    formData.append('name', this.props.name)
 
-    fetch(API_URL + "delete_repository", {
-      method: "POST",
+    window.fetch(API_URL + 'delete_repository', {
+      method: 'POST',
       body: formData
     })
       .then(response => response.json())
       .then(response => {
         this.setState(
-          { msg: response.data.success ? "Succesfully deleted repository." : "Could not delete repository." }
-        );
-        this.props.onClick();
+          { msg: response.data.success ? 'Succesfully deleted repository.' : 'Could not delete repository.' }
+        )
+        this.props.onClick()
       })
-      .catch(() => this.setState({msg: "Could not contact server"}));
+      .catch(() => this.setState({ msg: 'Could not contact server' }))
   }
 
-  render() {
-    const msg = this.state.msg;
+  render () {
+    const msg = this.state.msg
     return (
       <div>
         <button onClick={this.deleteRepo}>Delete</button>
         <div>{msg}</div>
       </div>
-    );
+    )
   }
 }
 
 class RepoList extends React.Component {
-  constructor(props) {
-    super(props);
+  constructor (props) {
+    super(props)
     this.state = {
       isLoaded: false,
       error: null,
       names: []
-    };
+    }
 
-    this.getFromRemote = this.getFromRemote.bind(this);
+    this.getFromRemote = this.getFromRemote.bind(this)
   }
 
-  getFromRemote() {
-    fetch(API_URL + "get_repositories")
+  getFromRemote () {
+    window.fetch(API_URL + 'get_repositories')
       .then(result => result.json())
       .then(result => {
         this.setState({
           isLoaded: true,
           names: result.data
-        });
+        })
       })
       .catch(() =>
         this.setState({
           isLoaded: true,
-          error: "Could not get repositories from server."
-        }));
+          error: 'Could not get repositories from server.'
+        }))
   }
 
-  componentDidMount() {
-    this.getFromRemote();
+  componentDidMount () {
+    this.getFromRemote()
   }
 
-  render() {
-    const { isLoaded, error, names } = this.state;
-    var list;
+  render () {
+    const { isLoaded, error, names } = this.state
+    var list
     if (error) {
-      list = <div>{error}</div>;
+      list = <div>{error}</div>
     } else if (!isLoaded) {
-      list = <ListPlaceholder />;
+      list = <ListPlaceholder />
     } else {
-      const names_list = names.map(
+      const namesList = names.map(
         (name, i) => (
-            <li key={i.toString()}>
-              <Link to={"/repo/" + name}>{name}</Link>
-              <DeleteButton name={name} onClick={this.getFromRemote} />
-            </li>
-        ));
-      list = <ul>{names_list}</ul>;
+          <li key={i.toString()}>
+            <Link to={'/repo/' + name}>{name}</Link>
+            <DeleteButton name={name} onClick={this.getFromRemote} />
+          </li>
+        ))
+      list = <ul>{namesList}</ul>
     }
 
     return (
@@ -140,82 +140,82 @@ class RepoList extends React.Component {
         {list}
         <CreateRepository onSubmit={this.getFromRemote} />
       </div>
-    );
+    )
   }
 }
 
 class CommitList extends React.Component {
-  constructor(props) {
-    super(props);
-    const name = props.match.params.name;
+  constructor (props) {
+    super(props)
+    const name = props.match.params.name
     this.state = {
       isLoaded: false,
       error: null,
       messages: [],
-      repo_name: name
-    };
+      repoName: name
+    }
 
-    this.getFromRemote = this.getFromRemote.bind(this);
+    this.getFromRemote = this.getFromRemote.bind(this)
   }
 
-  getFromRemote() {
-    const repo_name = this.state.repo_name;
+  getFromRemote () {
+    const repoName = this.state.repo_name
 
-    fetch(API_URL + `get_commits?name=${repo_name}`)
+    window.fetch(API_URL + `get_commits?name=${repoName}`)
       .then(result => result.json())
       .then(result => {
         // in case a lack of commit messages gets encoded as null
         if (result.data === null) {
-          result.data = [];
+          result.data = []
         }
         this.setState({
           isLoaded: true,
           messages: result.data
-        });
+        })
       })
       .catch(() =>
         this.setState({
           isLoaded: true,
-          error: "Could not get repository from server."
-        }));
+          error: 'Could not get repository from server.'
+        }))
   }
 
-  componentDidMount() {
-    this.getFromRemote();
+  componentDidMount () {
+    this.getFromRemote()
   }
 
-  render() {
-    const { isLoaded, error, messages, _ } = this.state;
-    var list;
+  render () {
+    const { isLoaded, error, messages, _ } = this.state
+    var list
     if (error) {
-      list = <div>{error.message}</div>;
+      list = <div>{error.message}</div>
     } else if (!isLoaded) {
-      list = <ListPlaceholder />;
+      list = <ListPlaceholder />
     } else {
-      const msg_list = messages.map((msg, i) => <li key={i.toString()}> {msg} </li>)
-      list = <ul>{msg_list}</ul>;
+      const msgList = messages.map((msg, i) => <li key={i.toString()}> {msg} </li>)
+      list = <ul>{msgList}</ul>
     }
 
-    return <div>{list}</div>;
+    return <div>{list}</div>
   }
 }
 
 const ListPlaceholder = () => (
   <ul>
-    <li><span className="placeholder">placeholder text placeholder text</span></li>
-    <li><span className="placeholder">placeholder text placeholder text</span></li>
-    <li><span className="placeholder">placeholder text placeholder text</span></li>
-    <li><span className="placeholder">placeholder text placeholder text</span></li>
+    <li><span className='placeholder'>placeholder text placeholder text</span></li>
+    <li><span className='placeholder'>placeholder text placeholder text</span></li>
+    <li><span className='placeholder'>placeholder text placeholder text</span></li>
+    <li><span className='placeholder'>placeholder text placeholder text</span></li>
   </ul>
-);
+)
 
 const AppRouter = () => (
   <Router>
-    <div className="main-layout">
-      <Route path="/" component={RepoList} />
-      <Route path="/repo/:name" component={CommitList} />
+    <div className='main-layout'>
+      <Route path='/' component={RepoList} />
+      <Route path='/repo/:name' component={CommitList} />
     </div>
   </Router>
-);
+)
 
-export default AppRouter;
+export default AppRouter
