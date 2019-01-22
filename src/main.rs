@@ -2,6 +2,7 @@ extern crate git2;
 extern crate iron;
 extern crate url;
 extern crate params;
+extern crate hex;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate router;
 #[macro_use] extern crate serde_json;
@@ -74,9 +75,18 @@ fn get_commits(req: &mut Request) -> IronResult<Response> {
     };
 
     let commits = get_repository(repo_name)
-        .map(|repo| git::get_commit_messages(&repo).ok())
-        .map(|msgs| json!({ "data": msgs }))
-        .map(|js| js.to_string());
+        .and_then(|repo| git::get_commits(&repo).ok())
+        .map(|commits| {
+            commits.iter()
+                .map(|commit| {
+                    json!({"message": commit.message, "sha1": commit.sha1})
+                })
+                .collect::<Vec<serde_json::Value>>()
+        })
+        .map(|commit_objects| {
+            json!({"data": commit_objects})
+        })
+        .map(|payload| payload.to_string());
 
     match commits {
         Some(commits) => Ok(Response::with((status::Ok, &commits[..]))),
@@ -172,6 +182,10 @@ mod git {
     use super::*;
 
     type Result<T> = std::result::Result<T, Error>;
+    pub struct Commit {
+        pub message: String,
+        pub sha1: String,
+    }
 
     /// Create a new repository in the target folder.
     pub fn create_repo(path: &Path, bare: bool) -> Result<Repository> {
@@ -211,13 +225,18 @@ mod git {
     }
 
     /// Return a list of commit messages from a repository.
-    pub fn get_commit_messages(repo: &Repository) -> Result<Vec<String>> {
+    pub fn get_commits(repo: &Repository) -> Result<Vec<Commit>> {
         let mut walk = repo.revwalk()?;
         walk.push_head()?;
 
         Ok(walk.into_iter()
                .filter_map(|id| id.and_then(|id| repo.find_commit(id)).ok())
-               .filter_map(|commit| commit.message().map(|msg| msg.to_owned()))
+               .map(|commit| {
+                   Commit {
+                       message: commit.message().unwrap_or("error: commit has no message").to_owned(),
+                       sha1: hex::encode(commit.id().as_bytes()),
+                   }
+               })
                .collect())
     }
 }

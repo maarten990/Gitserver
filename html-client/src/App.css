@@ -26,4 +26,9 @@
 
 .commit-hash {
   color: slategray;
+  font-size: 0.75em;
+}
+
+td {
+  padding: 0 2em 0 0;
 }

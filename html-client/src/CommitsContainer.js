@@ -2,23 +2,23 @@ import React from 'react'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
-const Commit = ({ message }) => (
+const Commit = ({ message, sha1 }) => (
   <tr className="commit">
     <td className="commit-message">
       {message}
     </td>
     <td className="commit-hash">
-      "placeholder_hash"
+      {sha1}
     </td>
   </tr>
 )
 
-const CommitList = ({ messages, isLoaded }) => {
+const CommitList = ({ commits, isLoaded }) => {
   if (isLoaded) {
     return (
       <table className="commit-list">
         <tbody>
-          {messages.map((msg, i) => <Commit message={msg} key={i} />)}
+          {commits.map((c, i) => <Commit message={c.message} sha1={c.sha1} key={i} />)}
         </tbody>
       </table>
     )
@@ -32,7 +32,7 @@ const CommitList = ({ messages, isLoaded }) => {
 class CommitsContainer extends React.Component {
   state = {
     isLoaded: false,
-    messages: [],
+    commits: [],
     error: "",
     repoName: this.props.match.params.name,
     nameChanged: true
@@ -41,11 +41,11 @@ class CommitsContainer extends React.Component {
   getFromRemote() {
     apiCall('get_commits', {name: this.state.repoName})
       .then(result => {
-        const messages = (result.data === null) ? [] : result.data
+        const commits = (result.data === null) ? [] : result.data
         this.setState((state, props) => {
           return {
             isLoaded: true,
-            messages: messages,
+            commits: commits,
             nameChanged: false
           }
         })
@@ -64,7 +64,7 @@ class CommitsContainer extends React.Component {
     if (newName !== prevState.repoName) {
       return {
         isLoaded: false,
-        messages: [],
+        commits: [],
         error: "",
         nameChanged: true,
         repoName: newName
@@ -88,7 +88,7 @@ class CommitsContainer extends React.Component {
     return (
       <div className="commits-container">
         <h1>Commits</h1>
-        <CommitList messages={this.state.messages} isLoaded={this.state.isLoaded} />
+        <CommitList commits={this.state.commits} isLoaded={this.state.isLoaded} />
         <p className="error-message">{this.state.error}</p>
       </div>
     )
