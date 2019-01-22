@@ -18,7 +18,7 @@ const CommitList = ({ messages, isLoaded }) => {
     return (
       <table className="commit-list">
         <tbody>
-          {messages.map((msg, i) => <Commit message={msg} id={i} />)}
+          {messages.map((msg, i) => <Commit message={msg} key={i} />)}
         </tbody>
       </table>
     )
@@ -33,32 +33,55 @@ class CommitsContainer extends React.Component {
   state = {
     isLoaded: false,
     messages: [],
-    error: ""
+    error: "",
+    repoName: this.props.match.params.name,
+    nameChanged: true
   }
 
   getFromRemote() {
-    // the repo name as passed by react-router
-    const repoName = this.props.match.params.name
-
-    apiCall('get_commits', {name: repoName})
+    apiCall('get_commits', {name: this.state.repoName})
       .then(result => {
         const messages = (result.data === null) ? [] : result.data
         this.setState((state, props) => {
           return {
             isLoaded: true,
-            messages: messages
+            messages: messages,
+            nameChanged: false
           }
         })
       })
       .catch(() =>
         this.setState({
           isLoaded: true,
-          error: 'Could not reach server.'
+          error: 'Could not reach server or repository does not exist.',
+          nameChanged: false
         }))
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const newName = nextProps.match.params.name
+
+    if (newName !== prevState.repoName) {
+      return {
+        isLoaded: false,
+        messages: [],
+        error: "",
+        nameChanged: true,
+        repoName: newName
+      }
+    } else {
+      return null
+    }
   }
 
   componentDidMount() {
     this.getFromRemote()
+  }
+
+  componentDidUpdate() {
+    if (this.state.nameChanged) {
+      this.getFromRemote()
+    }
   }
 
   render() {
