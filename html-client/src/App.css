@@ -7,3 +7,23 @@
 .main-layout {
   display: flex;
 }
+
+.error-message {
+  color: darkred;
+}
+
+.status-message {
+  color: darkgreen;
+}
+
+.repo-container {
+  border: 1px solid;
+}
+
+.commits-container {
+  border: 1px solid;
+}
+
+.commit-hash {
+  color: slategray;
+}
