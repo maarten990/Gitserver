@@ -3,6 +3,7 @@ const API_URL = '/api/'
 const endpoints = {
   'get_repositories': { url: 'get_repositories', method: 'GET' },
   'get_commits': { url: 'get_commits', method: 'GET' },
+  'get_diffs': { url: 'get_diffs', method: 'GET' },
   'create_repository': { url: 'create_repository', method: 'POST' },
   'delete_repository': { url: 'delete_repository', method: 'POST' }
 }

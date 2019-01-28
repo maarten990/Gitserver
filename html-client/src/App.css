@@ -24,9 +24,25 @@
   border: 1px solid;
 }
 
+.diffs-container {
+  border: 1px solid;
+}
+
 .commit-hash {
   color: slategray;
   font-size: 0.75em;
+}
+
+.diff-line {
+  font-size: 0.75em;
+}
+
+.diff-line.addition {
+  background-color: lightgreen;
+}
+
+.diff-line.deletion {
+  background-color: palevioletred;
 }
 
 td {

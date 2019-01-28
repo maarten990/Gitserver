@@ -6,6 +6,7 @@ extern crate hex;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate router;
 #[macro_use] extern crate serde_json;
+#[macro_use] extern crate serde_derive;
 #[macro_use] extern crate failure;
 
 use failure::Error;
@@ -36,12 +37,12 @@ impl APICache {
     }
 }
 
-fn get_post_string<'a>(req: &'a mut Request, keys: &[&str]) -> Option<&'a String> {
+fn get_post_string(req: &mut Request, keys: &[&str]) -> Option<String> {
     let map = req.get_ref::<Params>().unwrap();
     match map.find(keys) {
         Some(value) => {
             match *value {
-                Value::String(ref name) => Some(name),
+                Value::String(ref name) => Some(name.to_string()),
                 _ => None,
             }
         }
@@ -74,23 +75,36 @@ fn get_commits(req: &mut Request) -> IronResult<Response> {
         None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
     };
 
-    let commits = get_repository(repo_name)
+    let commits = get_repository(&repo_name)
         .and_then(|repo| git::get_commits(&repo).ok())
-        .map(|commits| {
-            commits.iter()
-                .map(|commit| {
-                    json!({"message": commit.message, "sha1": commit.sha1})
-                })
-                .collect::<Vec<serde_json::Value>>()
-        })
-        .map(|commit_objects| {
-            json!({"data": commit_objects})
-        })
+        .map(|commits| json!({"data": commits}))
         .map(|payload| payload.to_string());
 
     match commits {
         Some(commits) => Ok(Response::with((status::Ok, &commits[..]))),
         None => Ok(Response::with((status::InternalServerError, "Could not obtain commit messages"))),
+    }
+}
+
+fn get_diffs(req: &mut Request) -> IronResult<Response> {
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
+    };
+
+    let sha1 = match get_post_string(req, &["sha1"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `sha1`"))),
+    };
+
+    let diffs = get_repository(&repo_name)
+        .and_then(|repo| git::get_diffs(&repo, &sha1).ok())
+        .map(|diffs| json!({"data": diffs}))
+        .map(|payload| payload.to_string());
+
+    match diffs {
+        Some(diffs) => Ok(Response::with((status::Ok, &diffs[..]))),
+        None => Ok(Response::with((status::InternalServerError, "Could not obtain diffs"))),
     }
 }
 
@@ -167,6 +181,7 @@ fn main() {
         // api calls
         repos: get "/api/get_repositories" => get_repositories,
         commits: get "/api/get_commits" => get_commits,
+        diffs: get "/api/get_diffs" => get_diffs,
         create: post "/api/create_repository" => create_repository,
         delete: post "/api/delete_repository" => delete_repository,
 
@@ -182,9 +197,11 @@ mod git {
     use super::*;
 
     type Result<T> = std::result::Result<T, Error>;
+
+    #[derive(Serialize)]
     pub struct Commit {
-        pub message: String,
-        pub sha1: String,
+        message: String,
+        sha1: String,
     }
 
     /// Create a new repository in the target folder.
@@ -224,13 +241,35 @@ mod git {
         Ok(out)
     }
 
+    /// Return the diff between a commit and its parent.
+    fn diff_to_parent(repo: &Repository, commit: &git2::Commit) -> Result<Vec<String>> {
+        let tree = commit.tree()?;
+        let parent_tree = commit.parent(0).and_then(|p| p.tree()).ok();
+
+        let diff = repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None)?;
+        let mut diffs: Vec<String> = Vec::new();
+        let files_changed = diff.stats()?.files_changed();
+        for i in 0..files_changed {
+            let mut patch = git2::Patch::from_diff(&diff, i)?;
+            match patch {
+                Some(mut patch) => {
+                    diffs.push(String::from_utf8(patch.to_buf()?.to_owned())?);
+                },
+                None => {
+                    diffs.push("Binary file changed.".to_owned());
+                }
+            }
+        }
+
+        Ok(diffs)
+    }
+
     /// Return a list of commit messages from a repository.
     pub fn get_commits(repo: &Repository) -> Result<Vec<Commit>> {
         let mut walk = repo.revwalk()?;
         walk.push_head()?;
 
-        Ok(walk.into_iter()
-               .filter_map(|id| id.and_then(|id| repo.find_commit(id)).ok())
+        Ok(walk.filter_map(|id| id.and_then(|id| repo.find_commit(id)).ok())
                .map(|commit| {
                    Commit {
                        message: commit.message().unwrap_or("error: commit has no message").to_owned(),
@@ -238,5 +277,12 @@ mod git {
                    }
                })
                .collect())
+    }
+
+    /// Return a list of diffs belonging to a specific commit.
+    pub fn get_diffs(repo: &Repository, sha1: &str) -> Result<Vec<String>> {
+        let oid = git2::Oid::from_str(sha1)?;
+        let commit = repo.find_commit(oid)?;
+        diff_to_parent(&repo, &commit)
     }
 }

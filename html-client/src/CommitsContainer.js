@@ -1,11 +1,12 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
-const Commit = ({ message, sha1 }) => (
-  <tr className="commit">
-    <td className="commit-message">
-      {message}
+const Commit = ({ repoName, message, sha1 }) => (
+  <tr className='commit'>
+    <td className='commit-message'>
+      <Link to={`/repo/${repoName}/${sha1}`}>{message}</Link>
     </td>
     <td className="commit-hash">
       {sha1}
@@ -13,12 +14,12 @@ const Commit = ({ message, sha1 }) => (
   </tr>
 )
 
-const CommitList = ({ commits, isLoaded }) => {
+const CommitList = ({ repoName, commits, isLoaded }) => {
   if (isLoaded) {
     return (
       <table className="commit-list">
         <tbody>
-          {commits.map((c, i) => <Commit message={c.message} sha1={c.sha1} key={i} />)}
+          {commits.map((c, i) => <Commit repoName={repoName} message={c.message} sha1={c.sha1} key={i} />)}
         </tbody>
       </table>
     )
@@ -88,7 +89,10 @@ class CommitsContainer extends React.Component {
     return (
       <div className="commits-container">
         <h1>Commits</h1>
-        <CommitList commits={this.state.commits} isLoaded={this.state.isLoaded} />
+        <CommitList
+          repoName={this.state.repoName}
+          commits={this.state.commits}
+          isLoaded={this.state.isLoaded} />
         <p className="error-message">{this.state.error}</p>
       </div>
     )
