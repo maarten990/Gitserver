@@ -200,8 +200,8 @@ mod git {
 
     #[derive(Serialize)]
     pub struct Commit {
-        message: String,
-        sha1: String,
+        pub message: String,
+        pub sha1: String,
     }
 
     /// Create a new repository in the target folder.
