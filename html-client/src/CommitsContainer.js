@@ -54,7 +54,7 @@ class CommitsContainer extends React.Component {
       .catch(() =>
         this.setState({
           isLoaded: true,
-          error: 'Could not reach server or repository does not exist.',
+          error: 'No commits to display.',
           nameChanged: false
         }))
   }
