@@ -3,6 +3,7 @@ extern crate iron;
 extern crate url;
 extern crate params;
 extern crate hex;
+extern crate serde;
 #[macro_use] extern crate lazy_static;
 #[macro_use] extern crate router;
 #[macro_use] extern crate serde_json;
@@ -14,6 +15,7 @@ use git2::Repository;
 use iron::prelude::*;
 use iron::status;
 use params::{Params, Value};
+use serde::ser::{Serialize, Serializer, SerializeMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -108,6 +110,28 @@ fn get_diffs(req: &mut Request) -> IronResult<Response> {
     }
 }
 
+fn get_dirtree(req: &mut Request) -> IronResult<Response> {
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
+    };
+
+    let sha1 = match get_post_string(req, &["sha1"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `sha1`"))),
+    };
+
+    let tree = get_repository(&repo_name)
+        .and_then(|repo| git::get_dirtree(&repo, &sha1).ok())
+        .map(|tree| json!({"data": tree}))
+        .map(|payload| payload.to_string());
+
+    match tree {
+        Some(tree) => Ok(Response::with((status::Ok, &tree[..]))),
+        None => Ok(Response::with((status::InternalServerError, "Could not obtain directory tree"))),
+    }
+}
+
 fn create_repository(req: &mut Request) -> IronResult<Response> {
     let repo_name = match get_post_string(req, &["name"]) {
         Some(name) => name,
@@ -182,6 +206,7 @@ fn main() {
         repos: get "/api/get_repositories" => get_repositories,
         commits: get "/api/get_commits" => get_commits,
         diffs: get "/api/get_diffs" => get_diffs,
+        dirtree: get "/api/get_dirtree" => get_dirtree,
         create: post "/api/create_repository" => create_repository,
         delete: post "/api/delete_repository" => delete_repository,
 
@@ -202,6 +227,26 @@ mod git {
     pub struct Commit {
         pub message: String,
         pub sha1: String,
+    }
+
+    pub enum Dirtree {
+        File(String),
+        Dir(String, Vec<Dirtree>),
+    }
+
+    impl Serialize for Dirtree {
+        fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer {
+            match self {
+                Dirtree::File(name) => serializer.serialize_str(name),
+                Dirtree::Dir(name, children) => {
+                    let mut map = serializer.serialize_map(Some(1))?;
+                    map.serialize_entry(name, children)?;
+                    map.end()
+                }
+            }
+        }
     }
 
     /// Create a new repository in the target folder.
@@ -284,5 +329,43 @@ mod git {
         let oid = git2::Oid::from_str(sha1)?;
         let commit = repo.find_commit(oid)?;
         diff_to_parent(&repo, &commit)
+    }
+
+    fn fill_directory(repo: &Repository, dir: &mut Dirtree, tree: &git2::Tree) {
+        let mut files = Vec::new();
+        for entry in tree.iter() {
+            match entry.kind().unwrap() {
+                git2::ObjectType::Blob => {
+                    files.push(Dirtree::File(entry.name().unwrap().to_owned()));
+                },
+                git2::ObjectType::Tree => {
+                    let mut subtree = Dirtree::Dir (
+                        entry.name().unwrap().to_owned(),
+                        Vec::new(),
+                    );
+                    fill_directory(repo, &mut subtree,
+                        &entry.to_object(repo).ok()
+                            .and_then(|obj| obj.into_tree().ok()).unwrap());
+                    files.push(subtree);
+                },
+                _ => (),
+            }
+        }
+
+        match dir {
+            Dirtree::Dir(_, ref mut children) => *children = files,
+            Dirtree::File(_) => panic!("Expected Dirtree::Dir, got Dirtree::File"),
+        };
+    }
+
+    pub fn get_dirtree(repo: &Repository, sha1: &str) -> Result<Dirtree> {
+        let oid = git2::Oid::from_str(sha1)?;
+        let commit = repo.find_commit(oid)?;
+        let tree = commit.tree()?;
+
+        let mut dirtree = Dirtree::Dir("/".to_owned(), Vec::new());
+        fill_directory(repo, &mut dirtree, &tree);
+
+        Ok(dirtree)
     }
 }
