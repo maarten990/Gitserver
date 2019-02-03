@@ -132,6 +132,33 @@ fn get_dirtree(req: &mut Request) -> IronResult<Response> {
     }
 }
 
+fn get_filecontents(req: &mut Request) -> IronResult<Response> {
+    let repo_name = match get_post_string(req, &["name"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
+    };
+
+    let sha1 = match get_post_string(req, &["sha1"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `sha1`"))),
+    };
+
+    let path = match get_post_string(req, &["path"]) {
+        Some(name) => name,
+        None => return Ok(Response::with((status::BadRequest, "Expected string parameter `path`"))),
+    };
+
+    let contents = get_repository(&repo_name)
+        .and_then(|repo| git::get_filecontents(&repo, &sha1, &path).ok())
+        .map(|contents| json!({"data": contents}))
+        .map(|payload| payload.to_string());
+
+    match contents {
+        Some(contents) => Ok(Response::with((status::Ok, &contents[..]))),
+        None => Ok(Response::with((status::InternalServerError, "Could not obtain file contents"))),
+    }
+}
+
 fn create_repository(req: &mut Request) -> IronResult<Response> {
     let repo_name = match get_post_string(req, &["name"]) {
         Some(name) => name,
@@ -207,6 +234,7 @@ fn main() {
         commits: get "/api/get_commits" => get_commits,
         diffs: get "/api/get_diffs" => get_diffs,
         dirtree: get "/api/get_dirtree" => get_dirtree,
+        filecontents: get "/api/get_filecontents" => get_filecontents,
         create: post "/api/create_repository" => create_repository,
         delete: post "/api/delete_repository" => delete_repository,
 
@@ -367,5 +395,15 @@ mod git {
         fill_directory(repo, &mut dirtree, &tree);
 
         Ok(dirtree)
+    }
+
+    pub fn get_filecontents(repo: &Repository, sha1: &str, path: &str) -> Result<String> {
+        let oid = git2::Oid::from_str(sha1)?;
+        let commit = repo.find_commit(oid)?;
+        let tree = commit.tree()?;
+
+        let entry = tree.get_path(Path::new(path))?;
+        let blob = entry.to_object(repo)?.into_blob().or_else(|_| Err(format_err!("Not a blob")))?;
+        String::from_utf8(blob.content().to_owned()).or_else(|_| Err(format_err!("Not utf-8")))
     }
 }
