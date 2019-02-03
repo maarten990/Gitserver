@@ -1,12 +1,14 @@
 import React from 'react'
 
 const ListPlaceholder = () => (
-  <ul>
-    <li><span className='placeholder'>placeholder text placeholder text</span></li>
-    <li><span className='placeholder'>placeholder text placeholder text</span></li>
-    <li><span className='placeholder'>placeholder text placeholder text</span></li>
-    <li><span className='placeholder'>placeholder text placeholder text</span></li>
-  </ul>
+  <table>
+    <tbody>
+      <tr><td><span className='placeholder'>placeholder text placeholder text</span></td></tr>
+      <tr><td><span className='placeholder'>placeholder text placeholder text</span></td></tr>
+      <tr><td><span className='placeholder'>placeholder text placeholder text</span></td></tr>
+      <tr><td><span className='placeholder'>placeholder text placeholder text</span></td></tr>
+    </tbody>
+  </table>
 )
 
 export default ListPlaceholder
