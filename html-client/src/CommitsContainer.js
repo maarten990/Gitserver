@@ -6,7 +6,7 @@ import { apiCall } from './util.js'
 const Commit = ({ repoName, message, sha1 }) => (
   <>
     <tr>
-      <td className='commit-message'>
+      <td className='commit-message monospace'>
         <Link to={`/repo/${repoName}/${sha1}`}>{message}</Link>
       </td>
     </tr>

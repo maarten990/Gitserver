@@ -11,7 +11,7 @@ const FileLine = ({ line }) => (
 )
 
 const FileView = ({ contents }) => (
-  <div className='file-view'>
+  <div className='file-view monospace'>
     {contents.split("\n").map((line, i) => <FileLine line={line} key={i} />)}
   </div>
 )

@@ -39,8 +39,8 @@ h1 {
   font-size: 0.75em;
 }
 
-.diff-line {
-  font-size: 0.75em;
+.monospace {
+  font-family: monospace;
 }
 
 .diff-line.addition {

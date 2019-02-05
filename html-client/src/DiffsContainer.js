@@ -26,7 +26,7 @@ const DiffItem = ({ diff }) => (
 const DiffList = ({ diffs, isLoaded }) => {
   if (isLoaded) {
     return (
-      <div className="diff-list">
+      <div className="diff-list monospace">
         {diffs.map((diff, i) => <DiffItem diff={diff} key={i} />)}
       </div>
     )
