@@ -20,7 +20,7 @@ const FolderEntry = ({ name, onClick }) => (
   <tr>
     <td><FontAwesomeIcon icon={faFolder} /></td>
     <td>
-      <a onClick={(e) => onClick(e, name)} href="">{name}</a>
+      <button className='fileview-button' onClick={(e) => onClick(e, name)}>{name}</button>
     </td>
   </tr>
 )
@@ -29,7 +29,10 @@ const FileEntry = ({ location, name, onClick }) => (
   <tr>
     <td><FontAwesomeIcon icon={faFile} /></td>
     <td>
-      <a onClick={(e) => onClick(e, Array.concat(location, name))} href="">{name}</a>
+      <button className='fileview-button'
+        onClick={(e) => onClick(e, Array.concat(location, name).join('/'))}>
+        {name}
+      </button>
     </td>
   </tr>
 )
@@ -162,6 +165,7 @@ class FileViewContainer extends React.Component {
           }}
           />
         <FileView contents={this.state.fileContents}/>
+        <div className="error-message">{this.state.error}</div>
       </div>
     )
   }
