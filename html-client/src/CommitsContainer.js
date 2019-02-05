@@ -4,14 +4,18 @@ import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
 const Commit = ({ repoName, message, sha1 }) => (
-  <tr className='commit'>
-    <td className='commit-message'>
-      <Link to={`/repo/${repoName}/${sha1}`}>{message}</Link>
-    </td>
-    <td className="commit-hash">
-      {sha1}
-    </td>
-  </tr>
+  <>
+    <tr>
+      <td className='commit-message'>
+        <Link to={`/repo/${repoName}/${sha1}`}>{message}</Link>
+      </td>
+    </tr>
+    <tr>
+      <td className="commit-hash">
+        {sha1}
+      </td>
+    </tr>
+  </>
 )
 
 const CommitList = ({ repoName, commits, isLoaded }) => {

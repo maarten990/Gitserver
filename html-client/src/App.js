@@ -9,7 +9,7 @@ import FileViewContainer from './FileViewContainer'
 const App = () => (
   <Router>
     <div className='main-layout'>
-      <div className='top-row'>
+      <div className='ui-row'>
         <Route path='/' component={RepoContainer} />
         <Route path='/repo/:name' component={CommitsContainer} />
         <Route path='/repo/:name/:sha1' component={DiffsContainer} />

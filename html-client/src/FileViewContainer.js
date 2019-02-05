@@ -51,18 +51,20 @@ const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
   if (isLoaded) {
     const [fullPath, curFolder] = traverseTree(tree, path)
     return (
-      <table className='tree-view'>
-        <tbody>
-          {curFolder.map(
-            (item, i) => {
-              if (item instanceof Object) {
-                return <FolderEntry name={Object.keys(item)[0]} key={i} onClick={folderOnClick} />
-              } else {
-                return <FileEntry location={fullPath} name={item} key={i} onClick={fileOnClick} />
-              }
-            })}
-        </tbody>
-      </table>
+      <div className='file-view-container'>
+        <table className='tree-view'>
+          <tbody>
+            {curFolder.map(
+              (item, i) => {
+                if (item instanceof Object) {
+                  return <FolderEntry name={Object.keys(item)[0]} key={i} onClick={folderOnClick} />
+                } else {
+                  return <FileEntry location={fullPath} name={item} key={i} onClick={fileOnClick} />
+                }
+              })}
+          </tbody>
+        </table>
+      </div>
     )
   } else {
     return <ListPlaceholder />
@@ -144,7 +146,7 @@ class FileViewContainer extends React.Component {
 
   render() {
     return (
-      <div className='fileview-container'>
+      <div className='ui-row'>
         <TreeView tree={this.state.fileTree} path={this.state.currentPath} isLoaded={this.state.isLoaded}
           fileOnClick={(e, path) => {
             e.preventDefault()

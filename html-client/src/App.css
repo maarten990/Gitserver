@@ -13,7 +13,7 @@ h1 {
   flex-direction: column;
 }
 
-.top-row {
+.ui-row {
   display: flex;
   flex-direction: row;
 }
@@ -26,16 +26,12 @@ h1 {
   color: darkgreen;
 }
 
-.repo-container {
-  border: 1px solid;
-}
-
-.commits-container {
-  border: 1px solid;
-}
-
 .diffs-container {
-  border: 1px solid;
+  width: 80ch;
+}
+
+.commit-list {
+  width: 50ch;
 }
 
 .commit-hash {
