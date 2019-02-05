@@ -1,10 +1,24 @@
 import React from 'react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
+const FileLine = ({ line }) => (
+  <div className='file-line'>
+    {line}
+  </div>
+)
+
+const FileView = ({ contents }) => (
+  <div className='file-view'>
+    {contents.split("\n").map((line, i) => <FileLine line={line} key={i} />)}
+  </div>
+)
+
 const FolderEntry = ({ name, onClick }) => (
   <tr>
-    <td>FOLDER ICON</td>
+    <td><FontAwesomeIcon icon={faFolder} /></td>
     <td>
       <a onClick={(e) => onClick(e, name)} href="">{name}</a>
     </td>
@@ -13,7 +27,7 @@ const FolderEntry = ({ name, onClick }) => (
 
 const FileEntry = ({ location, name, onClick }) => (
   <tr>
-    <td>FILE ICON</td>
+    <td><FontAwesomeIcon icon={faFile} /></td>
     <td>
       <a onClick={(e) => onClick(e, Array.concat(location, name))} href="">{name}</a>
     </td>
@@ -26,7 +40,7 @@ const traverseTree = (tree, path) => {
   let outPath = []
   while (path.length > 0) {
     const item = path.pop()
-    curFolder = curFolder.find(value => Object.keys(value)[0] == item)[item]
+    curFolder = curFolder.find(value => Object.keys(value)[0] === item)[item]
     outPath.push(item)
   }
 
@@ -55,16 +69,21 @@ const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
   }
 }
 
-class FileViewContainer extends React.Component {
-  state = {
+const zeroState = (props) => {
+  return {
     isLoaded: false,
     fileTree: {},
     currentPath: [],
-    error: "",
-    repoName: this.props.match.params.name,
-    sha1: this.props.match.params.sha1,
+    error: '',
+    fileContents: '',
+    repoName: props.match.params.name,
+    sha1: props.match.params.sha1,
     shaChanged: true
   }
+}
+
+class FileViewContainer extends React.Component {
+  state = zeroState(this.props)
 
   getFromRemote() {
     apiCall('get_dirtree', { name: this.state.repoName, sha1: this.state.sha1 })
@@ -86,20 +105,28 @@ class FileViewContainer extends React.Component {
         }))
   }
 
+  getFileContents(path) {
+    apiCall('get_filecontents', { name: this.state.repoName, sha1: this.state.sha1, path: path })
+      .then(result => {
+        const contents = (result.data === null) ? "" : result.data
+        this.setState((state, props) => {
+          return {
+            fileContents: contents
+          }
+        })
+      })
+      .catch(() =>
+        this.setState({
+          error: 'Could not reach server or repository/commit does not exist.',
+        }))
+  }
+
   static getDerivedStateFromProps(nextProps, prevState) {
     const newName = nextProps.match.params.name
     const newSha = nextProps.match.params.sha1
 
     if (newSha !== prevState.sha1 || newName !== prevState.repoName) {
-      return {
-        isLoaded: false,
-        fileTree: {},
-        currentPath: [],
-        error: "",
-        shaChanged: true,
-        repoName: newName,
-        sha1: newSha
-      }
+      return zeroState(nextProps)
     } else {
       return null
     }
@@ -117,11 +144,11 @@ class FileViewContainer extends React.Component {
 
   render() {
     return (
-      <div className="fileview-container">
+      <div className='fileview-container'>
         <TreeView tree={this.state.fileTree} path={this.state.currentPath} isLoaded={this.state.isLoaded}
           fileOnClick={(e, path) => {
             e.preventDefault()
-            console.log(path)
+            this.getFileContents(path)
           }}
           folderOnClick={(e, name) => {
             e.preventDefault()
@@ -132,6 +159,7 @@ class FileViewContainer extends React.Component {
             })
           }}
           />
+        <FileView contents={this.state.fileContents}/>
       </div>
     )
   }

@@ -5,6 +5,7 @@ const endpoints = {
   'get_commits': { url: 'get_commits', method: 'GET' },
   'get_diffs': { url: 'get_diffs', method: 'GET' },
   'get_dirtree': { url: 'get_dirtree', method: 'GET' },
+  'get_filecontents': { url: 'get_filecontents', method: 'GET' },
   'create_repository': { url: 'create_repository', method: 'POST' },
   'delete_repository': { url: 'delete_repository', method: 'POST' }
 }
