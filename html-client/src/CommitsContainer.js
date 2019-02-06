@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ListPlaceholder from './ListPlaceholder'
-import { apiCall } from './util.js'
+import { apiCall, usePrevious } from './util.js'
 
 const Commit = ({ repoName, message, sha1 }) => (
   <>
@@ -34,73 +34,44 @@ const CommitList = ({ repoName, commits, isLoaded }) => {
   }
 }
 
-class CommitsContainer extends React.Component {
-  state = {
-    isLoaded: false,
-    commits: [],
-    error: "",
-    repoName: this.props.match.params.name,
-    nameChanged: true
-  }
+const getCommits = (name, setCommits, setLoaded) => {
+  apiCall('get_commits', { name: name })
+    .then(response => response.data)
+    .catch(() => [])
+    .then(commits => {
+      setCommits(commits)
+      setLoaded(true)
+    })
+}
 
-  getFromRemote() {
-    apiCall('get_commits', {name: this.state.repoName})
-      .then(result => {
-        const commits = (result.data === null) ? [] : result.data
-        this.setState((state, props) => {
-          return {
-            isLoaded: true,
-            commits: commits,
-            nameChanged: false
-          }
-        })
-      })
-      .catch(() =>
-        this.setState({
-          isLoaded: true,
-          error: 'No commits to display.',
-          nameChanged: false
-        }))
-  }
+const CommitsContainer = ({ name }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [commits, setCommits] = useState([])
+  const prevRepoName = usePrevious(name);
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const newName = nextProps.match.params.name
-
-    if (newName !== prevState.repoName) {
-      return {
-        isLoaded: false,
-        commits: [],
-        error: "",
-        nameChanged: true,
-        repoName: newName
-      }
-    } else {
-      return null
+  useEffect(() => {
+    if (prevRepoName !== name) {
+      setLoaded(false)
     }
-  }
+  }, [name])
 
-  componentDidMount() {
-    this.getFromRemote()
-  }
-
-  componentDidUpdate() {
-    if (this.state.nameChanged) {
-      this.getFromRemote()
+  useEffect(() => {
+    if (loaded) {
+      return
     }
-  }
 
-  render() {
-    return (
-      <div className="commits-container">
-        <h1>Commits</h1>
-        <CommitList
-          repoName={this.state.repoName}
-          commits={this.state.commits}
-          isLoaded={this.state.isLoaded} />
-        <p className="error-message">{this.state.error}</p>
-      </div>
-    )
-  }
+    getCommits(name, setCommits, setLoaded)
+  }, [loaded])
+
+  return (
+    <div className="commits-container">
+      <h1>Commits</h1>
+      <CommitList
+        repoName={name}
+        commits={commits}
+        isLoaded={loaded} />
+    </div>
+  )
 }
 
 export default CommitsContainer

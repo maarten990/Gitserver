@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 const API_URL = '/api/'
 
 const endpoints = {
@@ -46,4 +47,14 @@ const apiCall = async (endpoint, args = {}) => {
   }
 }
 
-export { apiCall }
+const usePrevious = (value) => {
+  const ref = useRef()
+
+  useEffect(() => {
+    ref.current = value
+  }, [value])
+
+  return ref.current
+}
+
+export { apiCall, usePrevious }

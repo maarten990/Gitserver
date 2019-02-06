@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Highlight from 'react-highlight'
 import ListPlaceholder from './ListPlaceholder'
-import { apiCall } from './util.js'
+import { apiCall, usePrevious } from './util.js'
 
 const DiffItem = ({ diff }) => (
   <Highlight className="diff">
@@ -21,73 +21,41 @@ const DiffList = ({ diffs, isLoaded }) => {
   }
 }
 
-class DiffsContainer extends React.Component {
-  state = {
-    isLoaded: false,
-    diffs: [],
-    error: "",
-    repoName: this.props.match.params.name,
-    sha1: this.props.match.params.sha1,
-    shaChanged: true
-  }
+const getDiffs = (name, sha1, setDiffs, setLoaded) => {
+  apiCall('get_diffs', { name: name, sha1: sha1 })
+    .then(response => response.data)
+    .catch(() => [])
+    .then(diffs => {
+      setDiffs(diffs)
+      setLoaded(true)
+    })
+}
 
-  getFromRemote() {
-    apiCall('get_diffs', { name: this.state.repoName, sha1: this.state.sha1 })
-      .then(result => {
-        const diffs = (result.data === null) ? [] : result.data
-        this.setState((state, props) => {
-          return {
-            isLoaded: true,
-            diffs: diffs,
-            shaChanged: false
-          }
-        })
-      })
-      .catch(() =>
-        this.setState({
-          isLoaded: true,
-          error: 'Could not reach server or repository/commit does not exist.',
-          shaChanged: false
-        }))
-  }
+const DiffsContainer = ({ name, sha1 }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [diffs, setDiffs] = useState([])
+  const prevSha1 = usePrevious(sha1);
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const newName = nextProps.match.params.name
-    const newSha = nextProps.match.params.sha1
-
-    if (newSha !== prevState.sha1 || newName !== prevState.repoName) {
-      return {
-        isLoaded: false,
-        diffs: [],
-        error: "",
-        shaChanged: true,
-        repoName: newName,
-        sha1: newSha
-      }
-    } else {
-      return null
+  useEffect(() => {
+    if (prevSha1 !== sha1) {
+      setLoaded(false)
     }
-  }
+  }, [sha1])
 
-  componentDidMount() {
-    this.getFromRemote()
-  }
-
-  componentDidUpdate() {
-    if (this.state.shaChanged) {
-      this.getFromRemote()
+  useEffect(() => {
+    if (loaded) {
+      return
     }
-  }
 
-  render() {
-    return (
-      <div className='diffs-container'>
-        <h1>Diffs</h1>
-        <DiffList diffs={this.state.diffs} isLoaded={this.state.isLoaded} />
-        <p className="error-message">{this.state.error}</p>
-      </div>
-    )
-  }
+    getDiffs(name, sha1, setDiffs, setLoaded)
+  }, [loaded])
+
+  return (
+    <div className='diffs-container'>
+      <h1>Diffs</h1>
+      <DiffList diffs={diffs} isLoaded={loaded} />
+    </div>
+  )
 }
 
 export default DiffsContainer

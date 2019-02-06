@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
@@ -41,104 +41,73 @@ const NewRepoForm = ({ handleSubmit, handleChange }) => (
   </div>
 )
 
-class RepoContainer extends React.Component {
-  state = {
-    // state regarding the repository list
-    repositories: [],
-    isLoaded: false,
-    errorMsg: "",
-
-    // state regarding the "Create new repository" button
-    repoName: "",
-
-    // generic message regarding the most recent action
-    statusMsg: ""
-  }
-
-  successMsg = "Succesfully created repository."
-  failMsg = "Could not create repository."
-
-  submitNewRepo = (event) => {
-    event.preventDefault()
-    apiCall('create_repository', {name: this.state.repoName})
-      .then(response => {
-        const msg = response.data.success ? this.successMsg : this.failMsg
-        this.setState((state, props) => {
-          return {statusMsg: msg}
-        })
-
-        this.refreshRepositories()
-      })
-      .catch(() => this.setState((state, props) => {
-        return { statusMsg: 'Could not contact server' }
-      }))
-  }
-
-  newRepoChange = (event) => {
-    const value = event.target.value
-    this.setState((state, props) => {
-      return {
-        repoName: value
-      }
+const createRepo = (event, name, setMsg, setLoaded) => {
+  event.preventDefault()
+  apiCall('create_repository', { name: name })
+    .then(response => response.data.success ? 'Succesfully created repository' : 'Could not create repository')
+    .catch(() => 'Could not contact server')
+    .then(msg => {
+      setMsg(msg)
+      setLoaded(false)
     })
-  }
+}
 
-  refreshRepositories = () => {
-    apiCall('get_repositories')
-      .then(result => {
-        const data = result.data
-        this.setState((state, props) => {
-          return {
-            isLoaded: true,
-            repositories: data
-          }
+const deleteRepo = (name, setMsg, setLoaded) => {
+  apiCall('delete_repository', { name: name })
+    .then(response => response.data.success ? `Deleted repository ${name}` : `Could not delete repository ${name}`)
+    .catch(() => 'Could not contact server')
+    .then(msg => {
+      setMsg(msg)
+      setLoaded(false)
+    })
+}
+
+const RepoContainer = () => {
+  const [repositories, setRepositories] = useState([])
+  const [loaded, setLoaded] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
+  const [statusMsg, setStatusMsg] = useState("")
+  const [newRepoName, setNewRepoName] = useState("")
+  useEffect(
+    () => {
+      if (loaded) {
+        return
+      }
+
+      apiCall('get_repositories')
+        .then(response => response.data)
+        .catch(() => {
+          setErrorMsg("Could not get repositories from server.")
+          return []
         })
-      })
-      .catch(() => {
-        this.setState((state, props) => {
-          return {
-            isLoaded: true,
-            errorMsg: 'Could not get repositories from server.'
-          }
+        .then(repositories => {
+          setRepositories(repositories)
+          setLoaded(true)
         })
-      })
-  }
+    },
+    [loaded],
+  )
 
-  handleDelete = (name) => {
-    apiCall('delete_repository', {name: name})
-      .then(result => {
-        const msg = result.data.success ? `Deleted repository ${name}` : `Could not delete repository ${name}`
-        this.setState((state, props) => {
-          return {
-            statusMsg: msg
+  return (
+    <div className="repo-container">
+      <h1>Repositories</h1>
+      <RepoList repositories={repositories} isLoaded={loaded} errorMsg={errorMsg}
+        handleDelete={name => deleteRepo(name, setStatusMsg, setLoaded)} />
+      <NewRepoForm
+        handleSubmit={
+          e => createRepo(e, newRepoName, setStatusMsg, setLoaded)
+        }
+        handleChange={
+          e => {
+            const value = e.target.value
+            setNewRepoName(value)
           }
-        })
+        }
+      />
 
-        this.refreshRepositories()
-      })
-      .catch(() => {
-        this.setState((state, props) => {
-          return {
-            statusMsg: 'Could not reach server.'
-          }
-        })
-      })
-  }
-
-  componentDidMount() {
-    this.refreshRepositories()
-  }
-
-  render() {
-    return (
-      <div className="repo-container">
-        <h1>Repositories</h1>
-        <RepoList repositories={this.state.repositories} isLoaded={this.state.isLoaded} errorMsg={this.state.errorMsg} handleDelete={this.handleDelete} />
-        <NewRepoForm handleSubmit={this.submitNewRepo} handleChange={this.newRepoChange} />
-        <p className="status-message">{this.state.statusMsg}</p>
-      </div>
-    )
-  }
+      <p className="status-message">{statusMsg}</p>
+    </div>
+  )
 }
 
 export default RepoContainer

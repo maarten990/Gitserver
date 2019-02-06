@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
 import Highlight from 'react-highlight'
@@ -69,101 +69,63 @@ const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
   }
 }
 
-const zeroState = (props) => {
-  return {
-    isLoaded: false,
-    fileTree: {},
-    currentPath: [],
-    error: '',
-    fileContents: '',
-    repoName: props.match.params.name,
-    sha1: props.match.params.sha1,
-    shaChanged: true
-  }
+const getDirTree = (name, sha1, setDirTree, setLoaded) => {
+  apiCall('get_dirtree', { name: name, sha1: sha1 })
+    .then(response => response.data['/'])
+    .catch(() => {})
+    .then(tree => {
+      setDirTree(tree)
+      setLoaded(true)
+    })
 }
 
-class FileViewContainer extends React.Component {
-  state = zeroState(this.props)
+const getFileContents = (name, sha1, path, setFileContents, setLoaded) => {
+  apiCall('get_filecontents', { name: name, sha1: sha1, path: path })
+    .then(response => response.data)
+    .catch(() => '')
+    .then(contents => {
+      setFileContents(contents)
+      setLoaded(true)
+    })
+}
 
-  getFromRemote() {
-    apiCall('get_dirtree', { name: this.state.repoName, sha1: this.state.sha1 })
-      .then(result => {
-        const tree = (result.data === null) ? {} : result.data
-        this.setState((state, props) => {
-          return {
-            isLoaded: true,
-            fileTree: tree["/"],
-            shaChanged: false
-          }
-        })
-      })
-      .catch(() =>
-        this.setState({
-          isLoaded: true,
-          error: 'Could not reach server or repository/commit does not exist.',
-          shaChanged: false
-        }))
-  }
+const FileViewContainer = ({ name, sha1 }) => {
+  const [loaded, setLoaded] = useState(false)
+  const [dirTree, setDirTree] = useState({})
+  const [currentPath, setCurrentPath] = useState([])
+  const [fileContents, setFileContents] = useState('')
+  const prevSha1 = useRef();
 
-  getFileContents(path) {
-    apiCall('get_filecontents', { name: this.state.repoName, sha1: this.state.sha1, path: path })
-      .then(result => {
-        const contents = (result.data === null) ? "" : result.data
-        this.setState((state, props) => {
-          return {
-            fileContents: contents
-          }
-        })
-      })
-      .catch(() =>
-        this.setState({
-          error: 'Could not reach server or repository/commit does not exist.',
-        }))
-  }
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const newName = nextProps.match.params.name
-    const newSha = nextProps.match.params.sha1
-
-    if (newSha !== prevState.sha1 || newName !== prevState.repoName) {
-      return zeroState(nextProps)
-    } else {
-      return null
+  useEffect(() => {
+    if (prevSha1.current !== sha1) {
+      setLoaded(false)
     }
-  }
+    prevSha1.current = sha1
+  })
 
-  componentDidMount() {
-    this.getFromRemote()
-  }
-
-  componentDidUpdate() {
-    if (this.state.shaChanged) {
-      this.getFromRemote()
+  useEffect(() => {
+    if (loaded) {
+      return
     }
-  }
 
-  render() {
-    return (
-      <div className='ui-row'>
-        <TreeView tree={this.state.fileTree} path={this.state.currentPath} isLoaded={this.state.isLoaded}
-          fileOnClick={(e, path) => {
-            e.preventDefault()
-            this.getFileContents(path)
-          }}
-          folderOnClick={(e, name) => {
-            e.preventDefault()
-            this.setState((state, props) => {
-              return {
-                currentPath: Array.concat(state.currentPath, name)
-              }
-            })
-          }}
-          />
-        <FileView contents={this.state.fileContents}/>
-        <div className="error-message">{this.state.error}</div>
-      </div>
-    )
-  }
+    getDirTree(name, sha1, setDirTree, setLoaded)
+  })
+
+  return (
+    <div className='ui-row'>
+      <TreeView tree={dirTree} path={currentPath} isLoaded={loaded}
+        fileOnClick={(e, path) => {
+          e.preventDefault()
+          getFileContents(name, sha1, path, setFileContents, setLoaded)
+        }}
+        folderOnClick={(e, name) => {
+          e.preventDefault()
+          setCurrentPath(Array.concat(currentPath, name))
+        }}
+      />
+      <FileView contents={fileContents} />
+    </div>
+  )
 }
 
 export default FileViewContainer

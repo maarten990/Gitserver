@@ -12,11 +12,13 @@ const App = () => (
     <div className='main-layout'>
       <div className='ui-row'>
         <Route path='/' component={RepoContainer} />
-        <Route path='/repo/:name' component={CommitsContainer} />
-        <Route path='/repo/:name/:sha1' component={DiffsContainer} />
+        <Route path='/repo/:name' render={({ match }) => <CommitsContainer name={match.params.name} />} />
+        <Route path='/repo/:name/:sha1'
+          render={({ match }) => <DiffsContainer name={match.params.name} sha1={match.params.sha1} />} />
       </div>
       <div className='bottom-row'>
-        <Route path='/repo/:name/:sha1' component={FileViewContainer} />
+        <Route path='/repo/:name/:sha1'
+        render={({ match }) => <FileViewContainer name={match.params.name} sha1={match.params.sha1} />} />
       </div>
     </div>
   </Router>
