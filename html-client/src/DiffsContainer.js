@@ -1,32 +1,18 @@
 import React from 'react'
+import Highlight from 'react-highlight'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
-const DiffLine = ({ line }) => {
-  let type = ""
-  if (line.startsWith("+")) {
-    type = "addition"
-  } else if (line.startsWith("-")) {
-    type = "deletion"
-  }
-
-  return (
-    <div className={`diff-line ${type}`} >
-      {line}
-    </div>
-  )
-}
-
 const DiffItem = ({ diff }) => (
-  <div className="diff-item">
-    {diff.split("\n").map((line, i) => <DiffLine line={line} key={i} />)}
-  </div>
+  <Highlight className="diff">
+    {diff}
+  </Highlight>
 )
 
 const DiffList = ({ diffs, isLoaded }) => {
   if (isLoaded) {
     return (
-      <div className="diff-list monospace">
+      <div className="diff-list">
         {diffs.map((diff, i) => <DiffItem diff={diff} key={i} />)}
       </div>
     )

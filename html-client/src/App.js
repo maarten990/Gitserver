@@ -1,5 +1,6 @@
 import React from 'react'
 import './App.css'
+import '../node_modules/highlight.js/styles/default.css'
 import { BrowserRouter as Router, Route } from 'react-router-dom'
 import RepoContainer from './RepoContainer'
 import CommitsContainer from './CommitsContainer'

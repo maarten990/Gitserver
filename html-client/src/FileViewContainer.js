@@ -1,19 +1,14 @@
 import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
+import Highlight from 'react-highlight'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall } from './util.js'
 
-const FileLine = ({ line }) => (
-  <div className='file-line'>
-    {line}
-  </div>
-)
-
 const FileView = ({ contents }) => (
-  <div className='file-view monospace'>
-    {contents.split("\n").map((line, i) => <FileLine line={line} key={i} />)}
-  </div>
+  <Highlight>
+    {contents}
+  </Highlight>
 )
 
 const FolderEntry = ({ name, onClick }) => (
