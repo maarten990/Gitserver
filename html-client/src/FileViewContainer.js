@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
 import Highlight from 'react-highlight'
 import ListPlaceholder from './ListPlaceholder'
-import { apiCall } from './util.js'
+import { apiCall, usePrevious } from './util.js'
 
 const FileView = ({ contents }) => (
   <Highlight>
@@ -52,6 +52,7 @@ const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
       <div className='file-view-container'>
         <table className='tree-view'>
           <tbody>
+            <FolderEntry name='..' key={-1} onClick={folderOnClick} />
             {curFolder.map(
               (item, i) => {
                 if (item instanceof Object) {
@@ -94,13 +95,12 @@ const FileViewContainer = ({ name, sha1 }) => {
   const [dirTree, setDirTree] = useState({})
   const [currentPath, setCurrentPath] = useState([])
   const [fileContents, setFileContents] = useState('')
-  const prevSha1 = useRef();
+  const prevSha1 = usePrevious(sha1)
 
   useEffect(() => {
-    if (prevSha1.current !== sha1) {
+    if (prevSha1 !== sha1) {
       setLoaded(false)
     }
-    prevSha1.current = sha1
   })
 
   useEffect(() => {
@@ -120,7 +120,11 @@ const FileViewContainer = ({ name, sha1 }) => {
         }}
         folderOnClick={(e, name) => {
           e.preventDefault()
-          setCurrentPath(Array.concat(currentPath, name))
+          if (name === '..') {
+            setCurrentPath(currentPath.slice(0, -1))
+          } else {
+            setCurrentPath(Array.concat(currentPath, name))
+          }
         }}
       />
       <FileView contents={fileContents} />
