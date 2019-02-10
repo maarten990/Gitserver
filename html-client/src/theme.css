@@ -12,10 +12,8 @@ button, .form-button {
   color: #f8f8f2;
   border: 2px;
   font-size: 0.75em;
-  padding-right: 0.5em;
-  padding-left: 0.5em;
-  padding-top: 0.25em;
-  padding-bottom: 0.25em;
+  padding: 0.25em 0.5em;
+  box-shadow: 2px -2px 1px #6272a4;
 }
 
 .commit-hash {
@@ -28,4 +26,8 @@ button, .form-button {
 
 .status-message {
   color: darkgreen;
+}
+
+.fileview-button {
+  color: #ff79c6;
 }

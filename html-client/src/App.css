@@ -49,4 +49,5 @@ h1 {
   font-size: 1em;
   text-decoration: underline;
   cursor: pointer;
+  padding: 1px;
 }
