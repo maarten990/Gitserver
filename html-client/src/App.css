@@ -1,5 +1,5 @@
 h1 {
-  font-size: 1.2em;
+  font-size: 1em;
 }
 
 .placeholder {
@@ -10,49 +10,37 @@ h1 {
 
 .main-layout {
   display: flex;
-  flex-direction: column;
-}
-
-.ui-row {
-  display: flex;
   flex-direction: row;
 }
 
-.error-message {
-  color: darkred;
+.middle-column {
+  display: flex;
+  flex-direction: column;
 }
 
-.status-message {
-  color: darkgreen;
+.commits-container {
+  max-height: 30vh;
+  overflow: auto;
 }
 
 .diffs-container {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.commit {
   width: 80ch;
 }
 
-.commit-list {
-  width: 50ch;
+.diff {
+  width: 80ch;
 }
 
 .commit-hash {
-  color: slategray;
   font-size: 0.75em;
 }
-
 .monospace {
   font-family: monospace;
-}
-
-.diff-line.addition {
-  background-color: lightgreen;
-}
-
-.diff-line.deletion {
-  background-color: palevioletred;
-}
-
-td {
-  padding: 0 2em 0 0;
 }
 
 .fileview-button {

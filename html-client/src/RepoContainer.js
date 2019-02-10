@@ -36,7 +36,8 @@ const NewRepoForm = ({ handleSubmit, handleChange }) => (
     <form onSubmit={handleSubmit}>
       <label>Name: </label>
       <input type='text' onChange={handleChange}/>
-      <input type='submit' value='Create new repository' />
+      <br />
+      <input type='submit' value='Create new repository' class='form-button' />
     </form>
   </div>
 )

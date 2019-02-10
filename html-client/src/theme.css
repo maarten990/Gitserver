@@ -1,0 +1,31 @@
+body {
+  background: #282a36;
+  color: #f8f8f2;
+}
+
+a {
+  color: #bd93f9;
+}
+
+button, .form-button {
+  background: #44475a;
+  color: #f8f8f2;
+  border: 2px;
+  font-size: 0.75em;
+  padding-right: 0.5em;
+  padding-left: 0.5em;
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+}
+
+.commit-hash {
+  color: #6272a4;
+}
+
+.error-message {
+  color: darkred;
+}
+
+.status-message {
+  color: darkgreen;
+}
