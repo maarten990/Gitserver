@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons'
-import Highlight from 'react-highlight'
+import { Link } from 'react-router-dom'
 import ListPlaceholder from './ListPlaceholder'
 import { apiCall, usePrevious } from './util.js'
-
-const FileView = ({ contents }) => (
-  <Highlight>
-    {contents}
-  </Highlight>
-)
 
 const FolderEntry = ({ name, onClick }) => (
   <tr>
@@ -20,14 +14,11 @@ const FolderEntry = ({ name, onClick }) => (
   </tr>
 )
 
-const FileEntry = ({ location, name, onClick }) => (
+const FileEntry = ({ repoName, sha1, location, name }) => (
   <tr>
     <td><FontAwesomeIcon icon={faFile} /></td>
     <td>
-      <button className='fileview-button'
-        onClick={(e) => onClick(e, Array.concat(location, name).join('/'))}>
-        {name}
-      </button>
+      <Link to={`/repo/${repoName}/${sha1}/${Array.concat(location, name).join('/')}`}>{name}</Link>
     </td>
   </tr>
 )
@@ -45,7 +36,7 @@ const traverseTree = (tree, path) => {
   return [outPath, curFolder]
 }
 
-const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
+const TreeView = ({ tree, path, repoName, sha1, isLoaded, fileOnClick, folderOnClick }) => {
   if (isLoaded) {
     const [fullPath, curFolder] = traverseTree(tree, path)
     return (
@@ -58,7 +49,7 @@ const TreeView = ({ tree, path, isLoaded, fileOnClick, folderOnClick }) => {
                 if (item instanceof Object) {
                   return <FolderEntry name={Object.keys(item)[0]} key={i} onClick={folderOnClick} />
                 } else {
-                  return <FileEntry location={fullPath} name={item} key={i} onClick={fileOnClick} />
+                  return <FileEntry repoName={repoName} sha1={sha1} location={fullPath} name={item} key={i} onClick={fileOnClick} />
                 }
               })}
           </tbody>
@@ -80,21 +71,10 @@ const getDirTree = (name, sha1, setDirTree, setLoaded) => {
     })
 }
 
-const getFileContents = (name, sha1, path, setFileContents, setLoaded) => {
-  apiCall('get_filecontents', { name: name, sha1: sha1, path: path })
-    .then(response => response.data)
-    .catch(() => '')
-    .then(contents => {
-      setFileContents(contents)
-      setLoaded(true)
-    })
-}
-
-const FileViewContainer = ({ name, sha1 }) => {
+const DirListing = ({ name, sha1 }) => {
   const [loaded, setLoaded] = useState(false)
   const [dirTree, setDirTree] = useState({})
   const [currentPath, setCurrentPath] = useState([])
-  const [fileContents, setFileContents] = useState('')
   const prevSha1 = usePrevious(sha1)
 
   useEffect(() => {
@@ -113,11 +93,7 @@ const FileViewContainer = ({ name, sha1 }) => {
 
   return (
     <div className='ui-row'>
-      <TreeView tree={dirTree} path={currentPath} isLoaded={loaded}
-        fileOnClick={(e, path) => {
-          e.preventDefault()
-          getFileContents(name, sha1, path, setFileContents, setLoaded)
-        }}
+      <TreeView repoName={name} sha1={sha1} tree={dirTree} path={currentPath} isLoaded={loaded}
         folderOnClick={(e, name) => {
           e.preventDefault()
           if (name === '..') {
@@ -127,9 +103,8 @@ const FileViewContainer = ({ name, sha1 }) => {
           }
         }}
       />
-      <FileView contents={fileContents} />
     </div>
   )
 }
 
-export default FileViewContainer
+export default DirListing
