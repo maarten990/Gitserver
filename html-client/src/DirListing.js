@@ -23,33 +23,41 @@ const FileEntry = ({ repoName, sha1, location, name }) => (
   </tr>
 )
 
-const traverseTree = (tree, path) => {
-  let curFolder = tree
-  path.reverse()
-  let outPath = []
-  while (path.length > 0) {
-    const item = path.pop()
-    curFolder = curFolder.find(value => Object.keys(value)[0] === item)[item]
-    outPath.push(item)
-  }
+const traverseTree = (tree, path) => (
+  path.reduce((folders, pathEntry) => folders[pathEntry], treeToObject(tree))
+)
 
-  return [outPath, curFolder]
+const treeToObject = (tree) => {
+  let out = {}
+
+  tree.forEach(entry => {
+    if (entry instanceof Object) {
+      // map a folder object to its list of children and recursively convert those children
+      const name = Object.keys(entry)[0];
+      out[name] = treeToObject(entry[name]);
+    } else {
+      // map a string to itself
+      out[entry] = entry;
+    }
+  })
+
+  return out
 }
 
 const TreeView = ({ tree, path, repoName, sha1, isLoaded, fileOnClick, folderOnClick }) => {
   if (isLoaded) {
-    const [fullPath, curFolder] = traverseTree(tree, path)
+    const curFolder = traverseTree(tree, path)
     return (
       <div className='file-view-container'>
         <table className='tree-view'>
           <tbody>
             <FolderEntry name='..' key={-1} onClick={folderOnClick} />
-            {curFolder.map(
-              (item, i) => {
-                if (item instanceof Object) {
-                  return <FolderEntry name={Object.keys(item)[0]} key={i} onClick={folderOnClick} />
+            {Object.keys(curFolder).map(
+              (key, i) => {
+                if (curFolder[key] instanceof Object) {
+                  return <FolderEntry name={key} key={i} onClick={folderOnClick} />
                 } else {
-                  return <FileEntry repoName={repoName} sha1={sha1} location={fullPath} name={item} key={i} onClick={fileOnClick} />
+                  return <FileEntry repoName={repoName} sha1={sha1} location={path} name={key} key={i} onClick={fileOnClick} />
                 }
               })}
           </tbody>
@@ -92,7 +100,10 @@ const DirListing = ({ name, sha1 }) => {
   })
 
   return (
-    <div className='ui-row'>
+    <div className='dir-listing'>
+      <div className='current-path'>
+        {`Path: /${currentPath.join('/')}`}
+      </div>
       <TreeView repoName={name} sha1={sha1} tree={dirTree} path={currentPath} isLoaded={loaded}
         folderOnClick={(e, name) => {
           e.preventDefault()
