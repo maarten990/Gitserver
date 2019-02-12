@@ -7,6 +7,18 @@ a {
   color: #bd93f9;
 }
 
+.repo-container {
+  margin-right: 1em;
+}
+
+.middle-column {
+  margin-right: 1em;
+}
+
+.commits-container {
+  margin-bottom: 1em;
+}
+
 button, .form-button {
   background: #44475a;
   color: #f8f8f2;
