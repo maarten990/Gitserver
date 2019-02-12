@@ -13,7 +13,7 @@ button, .form-button {
   border: 2px;
   font-size: 0.75em;
   padding: 0.25em 0.5em;
-  box-shadow: 2px -2px 1px #6272a4;
+  border: 1px solid #6272a4;
 }
 
 .commit-hash {

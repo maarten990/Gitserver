@@ -13,14 +13,20 @@ h1 {
   flex-direction: row;
 }
 
+.repo-container {
+  margin-right: 1em;
+}
+
 .middle-column {
   display: flex;
   flex-direction: column;
+  margin-right: 1em;
 }
 
 .commits-container {
   max-height: 30vh;
   overflow: auto;
+  margin-bottom: 1em;
 }
 
 .diffs-container {
