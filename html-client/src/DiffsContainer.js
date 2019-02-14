@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Highlight from 'react-highlight'
-import ListPlaceholder from './ListPlaceholder'
+import { Spinner } from "@blueprintjs/core";
 import { apiCall, usePrevious } from './util.js'
 
 const DiffItem = ({ diff }) => (
@@ -17,7 +17,7 @@ const DiffList = ({ diffs, isLoaded }) => {
       </div>
     )
   } else {
-    return <ListPlaceholder/>
+    return <Spinner intent='primary' />
   }
 }
 

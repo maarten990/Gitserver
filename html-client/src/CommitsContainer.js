@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Button, Collapse, Classes, Spinner } from "@blueprintjs/core";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
-import ListPlaceholder from './ListPlaceholder'
 import { apiCall, usePrevious } from './util.js'
 
 const MessageView = ({ message, onClose }) => (
@@ -10,38 +10,52 @@ const MessageView = ({ message, onClose }) => (
     <button onClick={onClose}>
       <FontAwesomeIcon icon={faUndo} />
     </button>
-    {message.split(/\n/).map((line, i) => <p className='monospace' key={i}>{line}</p>)}
+    {message.split(/\n/).map((line, i) => <p className={Classes.MONOSPACE_TEXT} key={i}>{line}</p>)}
   </div>
 )
 
-const Commit = ({ repoName, summary, body, sha1, onClick }) => (
-  <>
-    <tr>
-      <td className='commit-message monospace'>
-        <Link to={`/repo/${repoName}/${sha1}`} onClick={e => {onClick(summary, body)}}>{summary}</Link>
-      </td>
-    </tr>
-    <tr>
-      <td className="commit-hash">
-        {sha1}
-      </td>
-    </tr>
-  </>
-)
+const Commit = ({ repoName, summary, body, sha1 }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const messageLines = body.split(/\n/)
+  const buttonText = isOpen ? 'Collapse' : 'Expand'
 
-const CommitList = ({ repoName, commits, isLoaded, onClick }) => {
+  return (
+    <>
+      <tr>
+        <td className={`commit-message ${Classes.MONOSPACE_TEXT}`}>
+          <Link to={`/repo/${repoName}/${sha1}`}>{summary}</Link>
+        </td>
+        <td>
+          {body ? <Button text={buttonText} intent='primary' onClick={e => setIsOpen(!isOpen)} /> : null}
+        </td>
+      </tr>
+      <tr>
+        <td className={Classes.TEXT_MUTED}>
+          {sha1}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <Collapse isOpen={isOpen}>
+            {messageLines.map((line, i) => <p key={i}>{line}</p>)}
+          </Collapse>
+        </td>
+      </tr>
+    </>
+  )
+}
+
+const CommitList = ({ repoName, commits, isLoaded }) => {
   if (isLoaded) {
     return (
       <table className="commit-list">
         <tbody>
-          {commits.map((c, i) => <Commit repoName={repoName} summary={c.summary} body={c.body} sha1={c.sha1} onClick={onClick} key={i} />)}
+          {commits.map((c, i) => <Commit repoName={repoName} summary={c.summary} body={c.body} sha1={c.sha1} key={i} />)}
         </tbody>
       </table>
     )
   } else {
-    return (
-      <ListPlaceholder />
-    )
+    return <Spinner intent='primary' />
   }
 }
 
@@ -93,8 +107,7 @@ const CommitsContainer = ({ name }) => {
       <CommitList
         repoName={name}
         commits={commits}
-        isLoaded={loaded}
-        onClick={(summary, body) => setActiveCommit(`${summary}\n\n${body}`)} />
+        isLoaded={loaded} />
     )
   }
 

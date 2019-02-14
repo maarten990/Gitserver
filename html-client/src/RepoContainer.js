@@ -1,64 +1,72 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import ListPlaceholder from './ListPlaceholder'
+import { Button, FormGroup, InputGroup, Spinner, Toaster } from "@blueprintjs/core";
 import { apiCall } from './util.js'
 
-const DeleteButton = ({ handleClick }) => (
-  <button className="delete-button" onClick={handleClick}>Delete</button>
+const toaster = Toaster.create()
+
+const DeleteButton = ({ handleClick, visible }) => (
+  <Button intent='danger' text='' onClick={handleClick} icon='trash' minimal small disabled={!visible} />
 )
 
-const RepoItem = ({ name, handleDelete }) => (
-  <tr className="repo-item">
-    <td><Link to={`/repo/${name}`}>{name}</Link></td>
-    <td><DeleteButton handleClick={() => handleDelete(name)} /></td>
-  </tr>
+const RepoItem = ({ name, handleDelete, deleteVisible }) => (
+  <>
+    <DeleteButton className='delete-button' handleClick={() => handleDelete(name)} visible={deleteVisible} />
+    <p className='repo-name'><Link to={`/repo/${name}`}>{name}</Link></p>
+  </>
 )
 
-const RepoList = ({ repositories, isLoaded, errorMsg, handleDelete}) => {
+const RepoList = ({ repositories, isLoaded, handleDelete, deleteVisible}) => {
   if (isLoaded) {
     return (
       <div className="repo-list">
-        <table>
-          <tbody>
-            {repositories.map((name, i) => <RepoItem name={name} key={i} handleDelete={handleDelete} />)}
-          </tbody>
-        </table>
-        <p className="error-message">{errorMsg}</p>
+        {repositories.map((name, i) => <RepoItem name={name} key={i} handleDelete={handleDelete} deleteVisible={deleteVisible} />)}
       </div>
     )
   } else {
-    return <ListPlaceholder />
+    return <Spinner intent='primary' />
   }
 }
 
-const NewRepoForm = ({ handleSubmit, handleChange }) => (
+const NewRepoForm = ({ handleSubmit, handleChange, handleDelete, deleteVisible }) => (
   <div className="new-repo">
     <form onSubmit={handleSubmit}>
-      <label>Name: </label>
-      <input type='text' onChange={handleChange}/>
-      <br />
-      <input type='submit' value='Create new repository' className='form-button' />
+      <FormGroup
+        helperText='Create a new repository'
+        labelFor='name-input'
+      >
+        <InputGroup id='name-input' placeholder='Repository name' onChange={handleChange} />
+        <Button type='submit' text='Create' intent='primary' />
+      </FormGroup>
     </form>
+    <Button text={deleteVisible ? 'Cancel' : 'Delete a repository'} intent='warning' onClick={handleDelete} />
   </div>
 )
 
-const createRepo = (event, name, setMsg, setLoaded) => {
-  event.preventDefault()
+const createRepo = (name, toaster, setLoaded) => {
   apiCall('create_repository', { name: name })
-    .then(response => response.data.success ? 'Succesfully created repository' : 'Could not create repository')
-    .catch(() => 'Could not contact server')
-    .then(msg => {
-      setMsg(msg)
+    .then(response => {
+      const msg = response.data.success ? 'Succesfully created repository' : 'Could not create repository'
+      const intent = response.data.success ? 'success' : 'danger'
+      return [msg, intent]
+    })
+    .catch(() => ['Could not contact server', 'danger'])
+    .then(([msg, intent]) => {
+      toaster.show({message: msg, intent: intent})
       setLoaded(false)
     })
 }
 
-const deleteRepo = (name, setMsg, setLoaded) => {
+const deleteRepo = (name, toaster, setLoaded) => {
   apiCall('delete_repository', { name: name })
-    .then(response => response.data.success ? `Deleted repository ${name}` : `Could not delete repository ${name}`)
-    .catch(() => 'Could not contact server')
-    .then(msg => {
-      setMsg(msg)
+    .then(response => {
+      const msg = response.data.success ? `Deleted repository ${name}` : `Could not delete repository ${name}`
+      const intent = response.data.success ? 'success' : 'danger'
+      return [msg, intent]
+    })
+    .catch(() => ['Could not contact server', 'danger'])
+    .then(([msg, intent]) => {
+      toaster.show({message: msg, intent: intent})
       setLoaded(false)
     })
 }
@@ -66,9 +74,9 @@ const deleteRepo = (name, setMsg, setLoaded) => {
 const RepoContainer = () => {
   const [repositories, setRepositories] = useState([])
   const [loaded, setLoaded] = useState(false)
-  const [errorMsg, setErrorMsg] = useState("")
-  const [statusMsg, setStatusMsg] = useState("")
   const [newRepoName, setNewRepoName] = useState("")
+  const [deleteVisible, setDeleteVisible] = useState(false)
+
   useEffect(
     () => {
       if (loaded) {
@@ -78,7 +86,7 @@ const RepoContainer = () => {
       apiCall('get_repositories')
         .then(response => response.data)
         .catch(() => {
-          setErrorMsg("Could not get repositories from server.")
+          toaster.show({ message: 'Could not get repositories from server', intent: 'danger' })
           return []
         })
         .then(repositories => {
@@ -90,23 +98,25 @@ const RepoContainer = () => {
   )
 
   return (
-    <div className="repo-container">
+    <div className='repo-container'>
       <h1>Repositories</h1>
-      <RepoList repositories={repositories} isLoaded={loaded} errorMsg={errorMsg}
-        handleDelete={name => deleteRepo(name, setStatusMsg, setLoaded)} />
+      <RepoList repositories={repositories} isLoaded={loaded} deleteVisible={deleteVisible}
+        handleDelete={name => {
+          deleteRepo(name, toaster, setLoaded)
+          setDeleteVisible(false)
+        }} />
       <NewRepoForm
-        handleSubmit={
-          e => createRepo(e, newRepoName, setStatusMsg, setLoaded)
-        }
-        handleChange={
-          e => {
+        handleSubmit={e => {
+          e.preventDefault()
+          createRepo(newRepoName, toaster, setLoaded)
+        }}
+        handleChange={e => {
             const value = e.target.value
             setNewRepoName(value)
-          }
-        }
+        }}
+        handleDelete={() => setDeleteVisible(!deleteVisible)}
+        deleteVisible={deleteVisible}
       />
-
-      <p className="status-message">{statusMsg}</p>
     </div>
   )
 }
