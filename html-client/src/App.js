@@ -3,7 +3,7 @@ import 'normalize.css/normalize.css'
 import '@blueprintjs/core/lib/css/blueprint.css'
 import './App.css'
 import './theme.css'
-import 'highlight.js/styles/default.css'
+import './atom-one-dark.css'
 import { BrowserRouter as Router, Route } from 'react-router-dom'
 import RepoContainer from './RepoContainer'
 import CommitsContainer from './CommitsContainer'
@@ -12,8 +12,8 @@ import DirListing from './DirListing'
 
 const App = () => (
   <Router>
-    <div className='main-layout'>
-      <Route path='/' component={RepoContainer} />
+    <div className='main-layout bp3-dark'>
+      <Route path='/(repo)?/:name?' component={RepoContainer} />
       <Route path='/repo/:name'
         render={({ match }) => <CommitsContainer name={match.params.name} />} />
       <Route path='/repo/:name/:sha1'

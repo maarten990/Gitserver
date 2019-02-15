@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, FormGroup, InputGroup, Spinner, Toaster } from "@blueprintjs/core";
+import { Button, Text, Classes, FormGroup, InputGroup, Spinner, Toaster, Popover, Navbar } from "@blueprintjs/core";
 import { apiCall } from './util.js'
 
 const toaster = Toaster.create()
@@ -71,7 +71,7 @@ const deleteRepo = (name, toaster, setLoaded) => {
     })
 }
 
-const RepoContainer = () => {
+const RepoPopover = () => {
   const [repositories, setRepositories] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [newRepoName, setNewRepoName] = useState("")
@@ -98,8 +98,7 @@ const RepoContainer = () => {
   )
 
   return (
-    <div className='repo-container'>
-      <h1>Repositories</h1>
+    <div className='repo-popover'>
       <RepoList repositories={repositories} isLoaded={loaded} deleteVisible={deleteVisible}
         handleDelete={name => {
           deleteRepo(name, toaster, setLoaded)
@@ -118,6 +117,28 @@ const RepoContainer = () => {
         deleteVisible={deleteVisible}
       />
     </div>
+  )
+}
+
+const RepoContainer = ({ match }) => {
+  let contents = null
+  if (match.params.name) {
+    contents = (
+      <>
+        <Navbar.Divider />
+        <Navbar.Heading>Repository: {match.params.name}</Navbar.Heading>
+        <Navbar.Heading>Clone url: </Navbar.Heading>
+        <Text>git@servername:~/{match.params.name}</Text>
+      </>
+    )
+  }
+  return (
+    <Navbar className={`repo-container ${Classes.ELEVATION_1}`}>
+      <Navbar.Group>
+        <Popover content={<RepoPopover />} target={<Button className='popover-button' text='Load repository' intent='primary' />} />
+        {contents}
+      </Navbar.Group>
+    </Navbar>
   )
 }
 

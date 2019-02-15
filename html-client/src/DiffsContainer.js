@@ -52,7 +52,6 @@ const DiffsContainer = ({ name, sha1 }) => {
 
   return (
     <div className='diffs-container'>
-      <h1>Diffs</h1>
       <DiffList diffs={diffs} isLoaded={loaded} />
     </div>
   )

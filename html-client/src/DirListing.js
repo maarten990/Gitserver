@@ -51,7 +51,8 @@ const TreeView = ({ tree, setRefresh, loadFile}) => {
       onNodeExpand={node => {node.isExpanded = true; setRefresh(true)}}
       onNodeClick={(node, path, e) => {
         if ('childNodes' in node) {
-          return
+          node.isExpanded = !node.isExpanded
+          setRefresh(true)
         } else {
           const baseFolder = path[0]
           const rest = path.slice(1)
@@ -132,7 +133,6 @@ const DirListing = ({ name, sha1 }) => {
 
   return (
     <div className='dir-listing-container'>
-      <h1>Files</h1>
       {body}
     </div>
   )

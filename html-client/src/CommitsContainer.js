@@ -113,7 +113,6 @@ const CommitsContainer = ({ name }) => {
 
   return (
     <div className="commits-container">
-      <h1>Commits</h1>
       {contents}
     </div>
   )
