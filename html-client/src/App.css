@@ -1,15 +1,45 @@
 .main-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: max-content 1fr 2fr;
-  grid-template-areas:
-    "topbar topbar"
-    "commits files"
-    "diffs files";
   gap: 10px 10px;
   width: 100vw;
   height: 100vh;
 }
+
+@media (min-width: 1000px) {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: max-content 1fr 2fr;
+  .main-layout {
+    grid-template-areas:
+      "topbar topbar"
+      "commits files"
+      "diffs files";
+  }
+}
+
+@media (min-width: 1000px) {
+  .main-layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: max-content 1fr 2fr;
+    grid-template-areas:
+      "topbar topbar"
+      "commits files"
+      "diffs files";
+  }
+}
+
+@media (max-width: 1000px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: max-content 1fr 1fr 2fr;
+    grid-template-areas:
+      "topbar"
+      "commits"
+      "diffs"
+      "files";
+  }
+  height: initial;
+}
+
 
 .main-layout.bp3-dark {
   background: #293742;
