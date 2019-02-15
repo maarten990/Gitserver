@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button, Collapse, Classes, Spinner } from "@blueprintjs/core";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import { apiCall, usePrevious } from './util.js'
-
-const MessageView = ({ message, onClose }) => (
-  <div className='message-view'>
-    <button onClick={onClose}>
-      <FontAwesomeIcon icon={faUndo} />
-    </button>
-    {message.split(/\n/).map((line, i) => <p className={Classes.MONOSPACE_TEXT} key={i}>{line}</p>)}
-  </div>
-)
 
 const Commit = ({ repoName, summary, body, sha1 }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -82,7 +71,6 @@ const getCommits = (name, setCommits, setLoaded) => {
 const CommitsContainer = ({ name }) => {
   const [loaded, setLoaded] = useState(false)
   const [commits, setCommits] = useState([])
-  const [activeCommit, setActiveCommit] = useState(null)
   const prevRepoName = usePrevious(name);
 
   useEffect(() => {
@@ -99,21 +87,12 @@ const CommitsContainer = ({ name }) => {
     getCommits(name, setCommits, setLoaded)
   }, [loaded])
 
-  let contents
-  if (activeCommit) {
-    contents =  <MessageView message={activeCommit} onClose={() => setActiveCommit(null)} />
-  } else {
-    contents = (
+  return (
+    <div className="commits-container">
       <CommitList
         repoName={name}
         commits={commits}
         isLoaded={loaded} />
-    )
-  }
-
-  return (
-    <div className="commits-container">
-      {contents}
     </div>
   )
 }
