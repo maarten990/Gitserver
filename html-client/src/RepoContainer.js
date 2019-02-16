@@ -122,18 +122,20 @@ const RepoPopover = () => {
 
 const RepoContainer = ({ match }) => {
   let contents = null
-  if (match.params.name) {
+  const name = match.params.name
+  if (name) {
+    const hostname = window.location.hostname
     contents = (
       <>
         <Navbar.Divider />
         <Navbar.Heading>Repository: {match.params.name}</Navbar.Heading>
         <Navbar.Heading>Clone url: </Navbar.Heading>
-        <Text>git@servername:~/{match.params.name}</Text>
+        <InputGroup value={`git@${hostname}:${name}`} intent='primary' />
       </>
     )
   }
   return (
-    <Navbar className={`repo-container ${Classes.ELEVATION_1}`}>
+    <Navbar className={`repo-container ${Classes.ELEVATION_2}`}>
       <Navbar.Group>
         <Popover content={<RepoPopover />} target={<Button className='popover-button' text='Load repository' intent='primary' />} />
         {contents}
