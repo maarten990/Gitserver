@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-const API_URL = '/api/'
+const API_URL = '/api'
 
 const endpoints = {
   'get_repositories': { url: 'get_repositories', method: 'GET' },

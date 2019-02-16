@@ -6,17 +6,6 @@
 }
 
 @media (min-width: 1000px) {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: max-content 1fr 2fr;
-  .main-layout {
-    grid-template-areas:
-      "topbar topbar"
-      "commits files"
-      "diffs files";
-  }
-}
-
-@media (min-width: 1000px) {
   .main-layout {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: max-content 1fr 2fr;
