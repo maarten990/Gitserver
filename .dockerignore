@@ -1,0 +1,25 @@
+/target
+**/*.rs.bk
+repositories
+
+# dependencies
+html-client/node_modules
+html-client/.pnp
+html-client/.pnp.js
+
+# testing
+html-client/coverage
+
+# production
+html-client/build
+
+# misc
+html-client/.DS_Store
+html-client/.env.local
+html-client/.env.development.local
+html-client/.env.test.local
+html-client/.env.production.local
+
+html-client/npm-debug.log*
+html-client/yarn-debug.log*
+html-client/yarn-error.log*

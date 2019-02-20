@@ -1,0 +1,18 @@
+version: '3'
+services:
+  gitserver:
+    image: gitserver
+    ports:
+      - "3001:3001"
+    volumes:
+      - githome:/gitserver/repositories
+    entrypoint: /gitserver/target/release/gitserver
+  ssh:
+    image: gitserver-ssh
+    volumes:
+      - githome:/home/git
+    ports:
+      - "22:22"
+
+volumes:
+  githome:

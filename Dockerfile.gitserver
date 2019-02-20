@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:experimental
+
+FROM alpine:3.9 as builder
+RUN apk add --no-cache yarn cargo
+
+COPY . /gitserver
+WORKDIR /gitserver
+RUN --mount=type=cache,target=/gitserver/target \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/usr/local/cargo/registry \
+    cargo build --release; \
+    cp target/release/gitserver /gitserver-bin;
+
+WORKDIR /gitserver/html-client
+RUN --mount=type=cache,target=/gitserver/html-client/node_modules \
+    yarn install; \
+    yarn build; \
+    cp -r build /;
+
+FROM alpine:3.9
+RUN apk add --no-cache gcc
+COPY --from=builder /gitserver-bin /gitserver/target/release/gitserver
+COPY --from=builder /build /gitserver/html-client/build
+WORKDIR /gitserver
+CMD ["/gitserver/target/release/gitserver"]

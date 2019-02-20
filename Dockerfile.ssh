@@ -1,0 +1,7 @@
+FROM sickp/alpine-sshd
+RUN apk add --no-cache git
+RUN adduser -D -s /bin/ash  git; \
+    passwd -u git; \
+    echo "git:git" | chpasswd; \
+    chown -R git:git /home/git; \
+    ssh-keygen -A;
