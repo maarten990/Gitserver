@@ -70,8 +70,6 @@ fn get_repositories(_req: &mut Request) -> IronResult<Response> {
 }
 
 fn get_commits(req: &mut Request) -> IronResult<Response> {
-    // TODO: add caching
-
     let repo_name = match get_post_string(req, &["name"]) {
         Some(name) => name,
         None => return Ok(Response::with((status::BadRequest, "Expected string parameter `name`"))),
@@ -243,7 +241,7 @@ fn main() {
         page: get "/*" => static_handler,
     );
 
-    let _server = Iron::new(router).http("127.0.0.1:3001").unwrap();
+    let _server = Iron::new(router).http("0.0.0.0:3001").unwrap();
 }
 
 mod git {

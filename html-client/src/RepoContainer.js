@@ -137,7 +137,9 @@ const RepoContainer = ({ match }) => {
   return (
     <Navbar className={`repo-container ${Classes.ELEVATION_2}`}>
       <Navbar.Group>
-        <Popover content={<RepoPopover />} target={<Button className='popover-button' text='Load repository' intent='primary' />} />
+        <Popover
+          content={<RepoPopover />}
+          target={<Button className='popover-button' text='Load repository' intent='primary' />} />
         {contents}
       </Navbar.Group>
     </Navbar>
