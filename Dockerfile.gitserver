@@ -22,4 +22,7 @@ RUN apk add --no-cache gcc
 COPY --from=builder /gitserver-bin /gitserver/target/release/gitserver
 COPY --from=builder /build /gitserver/html-client/build
 WORKDIR /gitserver
+RUN adduser -D -s /bin/ash git; \
+    passwd -u git;
+USER git
 CMD ["/gitserver/target/release/gitserver"]
