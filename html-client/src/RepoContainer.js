@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Text, Classes, FormGroup, InputGroup, Spinner, Toaster, Popover, Navbar } from "@blueprintjs/core";
+import { Button, Classes, FormGroup, InputGroup, Spinner, Toaster, Popover, Navbar } from "@blueprintjs/core";
 import { apiCall } from './util.js'
 
 const toaster = Toaster.create()
@@ -98,7 +98,7 @@ const RepoPopover = () => {
   )
 
   return (
-    <div className='repo-popover'>
+    <div className='popover'>
       <RepoList repositories={repositories} isLoaded={loaded} deleteVisible={deleteVisible}
         handleDelete={name => {
           deleteRepo(name, toaster, setLoaded)

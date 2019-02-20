@@ -1,47 +1,38 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Button, Collapse, Classes, Spinner } from "@blueprintjs/core";
+import { withRouter } from 'react-router-dom'
+import { Card, Collapse, Classes, Spinner } from "@blueprintjs/core";
 import { apiCall, usePrevious } from './util.js'
 
-const Commit = ({ repoName, summary, body, sha1 }) => {
-  const [isOpen, setIsOpen] = useState(false)
+const Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
   const messageLines = body.split(/\n/)
-  const buttonText = isOpen ? 'Collapse' : 'Expand'
 
   return (
-    <>
-      <tr>
-        <td className={`commit-message ${Classes.MONOSPACE_TEXT}`}>
-          <Link to={`/repo/${repoName}/${sha1}`}>{summary}</Link>
-        </td>
-        <td>
-          {body ? <Button text={buttonText} intent='primary' onClick={e => setIsOpen(!isOpen)} /> : null}
-        </td>
-      </tr>
-      <tr>
-        <td className={Classes.TEXT_MUTED}>
-          {sha1}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <Collapse isOpen={isOpen}>
-            {messageLines.map((line, i) => <p key={i}>{line}</p>)}
-          </Collapse>
-        </td>
-      </tr>
-    </>
+    <Card
+      className={`commit-message ${isActive ? 'active' : null}`}
+      interactive={true}
+      onClick={() => {
+        history.push(`/repo/${repoName}/${sha1}`)
+        setActive(sha1)
+      }}>
+      {summary}
+      <p className={`${Classes.TEXT_MUTED} ${Classes.TEXT_SMALL}`}>
+        {sha1}
+      </p>
+      <Collapse isOpen={isActive}>
+        {messageLines.map((line, i) => <p key={i}>{line}</p>)}
+      </Collapse>
+    </Card>
   )
-}
+})
 
-const CommitList = ({ repoName, commits, isLoaded }) => {
+const CommitList = ({ repoName, commits, isLoaded, activeCommit, setActive }) => {
   if (isLoaded) {
     return (
-      <table className="commit-list">
-        <tbody>
-          {commits.map((c, i) => <Commit repoName={repoName} summary={c.summary} body={c.body} sha1={c.sha1} key={i} />)}
-        </tbody>
-      </table>
+      <div className="commit-list">
+        {commits.map((c, i) => (
+          <Commit repoName={repoName} summary={c.summary} body={c.body} sha1={c.sha1} key={i} isActive={activeCommit === c.sha1} setActive={setActive} />
+        ))}
+      </div>
     )
   } else {
     return <Spinner intent='primary' />
@@ -68,9 +59,10 @@ const getCommits = (name, setCommits, setLoaded) => {
     })
 }
 
-const CommitsContainer = ({ name }) => {
+const CommitsContainer = ({ name, sha1 }) => {
   const [loaded, setLoaded] = useState(false)
   const [commits, setCommits] = useState([])
+  const [active, setActive] = useState(sha1)
   const prevRepoName = usePrevious(name);
 
   useEffect(() => {
@@ -92,7 +84,9 @@ const CommitsContainer = ({ name }) => {
       <CommitList
         repoName={name}
         commits={commits}
-        isLoaded={loaded} />
+        isLoaded={loaded}
+        activeCommit={active}
+        setActive={setActive} />
     </div>
   )
 }

@@ -13,8 +13,8 @@ const App = () => (
   <Router>
     <div className='main-layout bp3-dark'>
       <Route path='/(repo)?/:name?' component={RepoContainer} />
-      <Route path='/repo/:name'
-        render={({ match }) => <CommitsContainer name={match.params.name} />} />
+      <Route path='/repo/:name/:sha1?'
+        render={({ match }) => <CommitsContainer name={match.params.name} sha1={match.params.sha1} />} />
       <Route path='/repo/:name/:sha1'
         render={({ match }) => <DiffsContainer name={match.params.name} sha1={match.params.sha1} />} />
       <Route path='/repo/:name/:sha1'
