@@ -9,18 +9,18 @@ const DeleteButton = ({ handleClick, visible }) => (
   <Button intent='danger' text='' onClick={handleClick} icon='trash' minimal small disabled={!visible} />
 )
 
-const RepoItem = ({ name, handleDelete, deleteVisible }) => (
+const RepoItem = ({ name, handleDelete, deleteVisible, closePopup }) => (
   <>
     <DeleteButton className='delete-button' handleClick={() => handleDelete(name)} visible={deleteVisible} />
-    <p className='repo-name'><Link to={`/repo/${name}`}>{name}</Link></p>
+    <Link className='repo-name' onClick={closePopup} to={`/repo/${name}`}>{name}</Link>
   </>
 )
 
-const RepoList = ({ repositories, isLoaded, handleDelete, deleteVisible}) => {
+const RepoList = ({ repositories, isLoaded, handleDelete, deleteVisible, closePopup }) => {
   if (isLoaded) {
     return (
       <div className="repo-list">
-        {repositories.map((name, i) => <RepoItem name={name} key={i} handleDelete={handleDelete} deleteVisible={deleteVisible} />)}
+        {repositories.map((name, i) => <RepoItem name={name} key={i} handleDelete={handleDelete} deleteVisible={deleteVisible} closePopup={closePopup} />)}
       </div>
     )
   } else {
@@ -71,7 +71,7 @@ const deleteRepo = (name, toaster, setLoaded) => {
     })
 }
 
-const RepoPopover = () => {
+const RepoPopover = ({ closePopup }) => {
   const [repositories, setRepositories] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [newRepoName, setNewRepoName] = useState("")
@@ -99,7 +99,11 @@ const RepoPopover = () => {
 
   return (
     <div className='popover'>
-      <RepoList repositories={repositories} isLoaded={loaded} deleteVisible={deleteVisible}
+      <RepoList
+        repositories={repositories}
+        isLoaded={loaded}
+        deleteVisible={deleteVisible}
+        closePopup={closePopup}
         handleDelete={name => {
           deleteRepo(name, toaster, setLoaded)
           setDeleteVisible(false)
@@ -121,6 +125,7 @@ const RepoPopover = () => {
 }
 
 const RepoContainer = ({ match }) => {
+  const [popoverIsOpen, setPopoverIsOpen] = useState(false)
   let contents = null
   const name = match.params.name
   if (name) {
@@ -134,12 +139,19 @@ const RepoContainer = ({ match }) => {
       </>
     )
   }
+
   return (
     <Navbar className={`repo-container ${Classes.ELEVATION_2}`}>
       <Navbar.Group>
         <Popover
-          content={<RepoPopover />}
-          target={<Button className='popover-button' text='Load repository' intent='primary' />} />
+          content={<RepoPopover closePopup={() => setPopoverIsOpen(false) }/>}
+          target={<Button className='popover-button' text='Load repository' intent='primary' />}
+          isOpen={popoverIsOpen}
+          onInteraction={nextState => {
+            if (nextState !== popoverIsOpen) {
+              setPopoverIsOpen(nextState)
+            }
+          }}/>
         {contents}
       </Navbar.Group>
     </Navbar>
