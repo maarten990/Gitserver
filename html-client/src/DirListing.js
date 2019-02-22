@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Button, Spinner, Tree } from "@blueprintjs/core";
 import Highlight from 'react-highlight'
-import { apiCall, usePrevious } from './util.js'
+import { usePrevious } from './util.js'
+import { connect } from 'react-redux'
+import { dirtreeFetch, fileContentsFetch } from './redux/actions'
 
 var id = 0;
 const getId = () => {
@@ -33,16 +35,6 @@ const formatTree = (tree) => {
   return out
 }
 
-const getFileContents = (name, sha1, path, setFileContents) => {
-  setFileContents({loading: true})
-  apiCall('get_filecontents', { name: name, sha1: sha1, path: path })
-    .then(response => response.data)
-    .catch(() => '')
-    .then(contents => {
-      setFileContents(contents)
-    })
-}
-
 const TreeView = ({ tree, setRefresh, loadFile}) => {
   return (
     <Tree
@@ -70,36 +62,17 @@ const TreeView = ({ tree, setRefresh, loadFile}) => {
   )
 }
 
-const getDirTree = (name, sha1, setDirTree, setLoaded) => {
-  apiCall('get_dirtree', { name: name, sha1: sha1 })
-    .then(response => response.data['/'])
-    .catch(() => {})
-    .then(tree => {
-      setDirTree(formatTree(tree))
-      setLoaded(true)
-    })
-}
 
-const DirListing = ({ name, sha1 }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [dirTree, setDirTree] = useState({})
+const DirListing = ({ name, sha1, tree, fileContents, isLoaded, dirtreeFetch, fileContentsFetch }) => {
   const [refresh, setRefresh] = useState(false)
-  const [fileContents, setFileContents] = useState(null)
+  const [showFile, setShowFile] = useState(false)
   const prevSha1 = usePrevious(sha1)
 
   useEffect(() => {
     if (prevSha1 !== sha1) {
-      setLoaded(false)
+      dirtreeFetch(name, sha1)
     }
   }, [sha1])
-
-  useEffect(() => {
-    if (loaded) {
-      return
-    }
-
-    getDirTree(name, sha1, setDirTree, setLoaded)
-  }, [loaded])
 
   // keep changing this variable in vain to allow for the tree to rerender
   useEffect(() => {
@@ -107,27 +80,26 @@ const DirListing = ({ name, sha1 }) => {
   }, [refresh])
 
   let body
-  if (!loaded) {
+  if (!isLoaded) {
     body = <Spinner intent='primary' />
-  } else if (fileContents) {
-    if (fileContents instanceof Object) {
-      body = <Spinner intent='primary' />
-    } else {
-      body = (
-        <>
-          <Button intent='primary' text='Back' onClick={() => setFileContents(null)} />
-          <Highlight>
-            {fileContents}
-          </Highlight>
-        </>
-      )
-    }
+  } else if (showFile) {
+    body = (
+      <>
+        <Button intent='primary' text='Back' onClick={() => setShowFile(false)} />
+        <Highlight>
+          {fileContents}
+        </Highlight>
+      </>
+    )
   } else {
     body = (
       <TreeView
-        tree={dirTree}
+        tree={tree}
         setRefresh={setRefresh}
-        loadFile={path => getFileContents(name, sha1, path, setFileContents)} />
+        loadFile={path => {
+          fileContentsFetch(name, sha1, path)
+          setShowFile(true)
+        }} />
     )
   }
 
@@ -138,4 +110,17 @@ const DirListing = ({ name, sha1 }) => {
   )
 }
 
-export default DirListing
+const mapStateToProps = state => {
+  return {
+    tree: formatTree(state.dirtree.tree),
+    fileContents: state.dirtree.fileContents,
+    isLoaded: !state.dirtree.loading,
+  }
+}
+
+const mapDispatchToProps = {
+  dirtreeFetch,
+  fileContentsFetch,
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(DirListing)

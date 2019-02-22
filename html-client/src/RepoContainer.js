@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Classes, FormGroup, InputGroup, Spinner, Toaster, Popover, Navbar } from "@blueprintjs/core";
-import { apiCall } from './util.js'
+import { Button, FormGroup, InputGroup, Popover, Spinner, Toaster } from "@blueprintjs/core";
+import { connect } from 'react-redux'
+import { reposFetch, repoCreate, repoDelete } from './redux/actions'
 
 const toaster = Toaster.create()
 
@@ -43,75 +44,42 @@ const NewRepoForm = ({ handleSubmit, handleChange, handleDelete, deleteVisible }
   </div>
 )
 
-const createRepo = (name, toaster, setLoaded) => {
-  apiCall('create_repository', { name: name })
-    .then(response => {
-      const msg = response.data.success ? 'Succesfully created repository' : 'Could not create repository'
-      const intent = response.data.success ? 'success' : 'danger'
-      return [msg, intent]
-    })
-    .catch(() => ['Could not contact server', 'danger'])
-    .then(([msg, intent]) => {
-      toaster.show({message: msg, intent: intent})
-      setLoaded(false)
-    })
-}
-
-const deleteRepo = (name, toaster, setLoaded) => {
-  apiCall('delete_repository', { name: name })
-    .then(response => {
-      const msg = response.data.success ? `Deleted repository ${name}` : `Could not delete repository ${name}`
-      const intent = response.data.success ? 'success' : 'danger'
-      return [msg, intent]
-    })
-    .catch(() => ['Could not contact server', 'danger'])
-    .then(([msg, intent]) => {
-      toaster.show({message: msg, intent: intent})
-      setLoaded(false)
-    })
-}
-
-const RepoPopover = ({ closePopup }) => {
-  const [repositories, setRepositories] = useState([])
-  const [loaded, setLoaded] = useState(false)
+const RepoPopover = ({ repositories, isLoaded, reposFetch, repoCreate, repoDelete }) => {
   const [newRepoName, setNewRepoName] = useState("")
   const [deleteVisible, setDeleteVisible] = useState(false)
+  const [popoverIsOpen, setPopoverIsOpen] = useState(false)
+  const [firstLoad, setFirstLoad] = useState(true)
 
-  useEffect(
-    () => {
-      if (loaded) {
-        return
-      }
+  useEffect(() => {
+    if (firstLoad) {
+      reposFetch()
+      setFirstLoad(false)
+    }
+  }, [firstLoad])
 
-      apiCall('get_repositories')
-        .then(response => response.data)
-        .catch(() => {
-          toaster.show({ message: 'Could not get repositories from server', intent: 'danger' })
-          return []
-        })
-        .then(repositories => {
-          setRepositories(repositories)
-          setLoaded(true)
-        })
-    },
-    [loaded],
-  )
-
-  return (
+  const contents = (
     <div className='popover'>
       <RepoList
         repositories={repositories}
-        isLoaded={loaded}
+        isLoaded={isLoaded}
         deleteVisible={deleteVisible}
-        closePopup={closePopup}
+        closePopup={() => setPopoverIsOpen(false)}
         handleDelete={name => {
-          deleteRepo(name, toaster, setLoaded)
+          repoDelete(
+            name,
+            () => toaster.show({ message: 'Successfully deleted repository', intent: 'success' }),
+            () => toaster.show({ message: 'Could not delete repository', intent: 'warning' }),
+          )
           setDeleteVisible(false)
         }} />
       <NewRepoForm
         handleSubmit={e => {
           e.preventDefault()
-          createRepo(newRepoName, toaster, setLoaded)
+          repoCreate(
+            newRepoName,
+            () => toaster.show({ message: 'Successfully created repository', intent: 'success' }),
+            () => toaster.show({ message: 'Could not create repository', intent: 'warning' }),
+          )
         }}
         handleChange={e => {
             const value = e.target.value
@@ -122,40 +90,31 @@ const RepoPopover = ({ closePopup }) => {
       />
     </div>
   )
-}
-
-const RepoContainer = ({ match }) => {
-  const [popoverIsOpen, setPopoverIsOpen] = useState(false)
-  let contents = null
-  const name = match.params.name
-  if (name) {
-    const hostname = window.location.hostname
-    contents = (
-      <>
-        <Navbar.Divider />
-        <Navbar.Heading>Repository: {match.params.name}</Navbar.Heading>
-        <Navbar.Heading>Clone url: </Navbar.Heading>
-        <InputGroup value={`git@${hostname}:${name}`} intent='primary' />
-      </>
-    )
-  }
 
   return (
-    <Navbar className={`repo-container ${Classes.ELEVATION_2}`}>
-      <Navbar.Group>
-        <Popover
-          content={<RepoPopover closePopup={() => setPopoverIsOpen(false) }/>}
-          target={<Button className='popover-button' text='Load repository' intent='primary' />}
-          isOpen={popoverIsOpen}
-          onInteraction={nextState => {
-            if (nextState !== popoverIsOpen) {
-              setPopoverIsOpen(nextState)
-            }
-          }}/>
-        {contents}
-      </Navbar.Group>
-    </Navbar>
+    <Popover
+      content={contents}
+      target={<Button className='popover-button' text='Load repository' intent='primary' />}
+      isOpen={popoverIsOpen}
+      onInteraction={nextState => {
+        if (nextState !== popoverIsOpen) {
+          setPopoverIsOpen(nextState)
+        }
+      }} />
   )
 }
 
-export default RepoContainer
+const mapStateToProps = state => {
+  return {
+    repositories: state.repositories.repositories,
+    isLoaded: !state.repositories.loading,
+  }
+}
+
+const mapDispatchToProps = {
+  reposFetch,
+  repoCreate,
+  repoDelete
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(RepoPopover)

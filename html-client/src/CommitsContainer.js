@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
 import { Card, Collapse, Classes, Spinner } from "@blueprintjs/core";
-import { apiCall, usePrevious } from './util.js'
+import { usePrevious } from './util.js'
+import { connect } from 'react-redux'
+import { commitsFetch } from './redux/actions'
 
 const Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
   const messageLines = body.split(/\n/)
@@ -49,46 +51,37 @@ const summarizeCommit = ({ message, sha1 }) => {
   }
 }
 
-const getCommits = (name, setCommits, setLoaded) => {
-  apiCall('get_commits', { name: name })
-    .then(response => response.data)
-    .catch(() => [])
-    .then(commits => {
-      setCommits(commits.map(summarizeCommit))
-      setLoaded(true)
-    })
-}
-
-const CommitsContainer = ({ name, sha1 }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [commits, setCommits] = useState([])
+const CommitsContainer = ({ name, sha1, commits, commitsFetch, isLoaded }) => {
   const [active, setActive] = useState(sha1)
   const prevRepoName = usePrevious(name);
 
   useEffect(() => {
     if (prevRepoName !== name) {
-      setLoaded(false)
+      commitsFetch(name)
     }
   }, [name])
-
-  useEffect(() => {
-    if (loaded) {
-      return
-    }
-
-    getCommits(name, setCommits, setLoaded)
-  }, [loaded])
 
   return (
     <div className="commits-container">
       <CommitList
         repoName={name}
         commits={commits}
-        isLoaded={loaded}
+        isLoaded={isLoaded}
         activeCommit={active}
         setActive={setActive} />
     </div>
   )
 }
 
-export default CommitsContainer
+const mapStateToProps = state => {
+  return {
+    commits: state.commits.commits.map(summarizeCommit),
+    isLoaded: !state.commits.loading,
+  }
+}
+
+const mapDispatchToProps = {
+  commitsFetch
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(CommitsContainer)
