@@ -51,13 +51,17 @@ const summarizeCommit = ({ message, sha1 }) => {
   }
 }
 
-const CommitsContainer = ({ name, sha1, commits, commitsFetch, isLoaded }) => {
+const CommitsContainer = withRouter(({ history, name, sha1, commits, commitsFetch, isLoaded }) => {
   const [active, setActive] = useState(sha1)
   const prevRepoName = usePrevious(name);
 
   useEffect(() => {
     if (prevRepoName !== name) {
-      commitsFetch(name)
+      commitsFetch(name, commits => {
+        if (commits) {
+          history.push(`/repo/${name}/${commits[0].sha1}`)
+        }
+      })
     }
   }, [name])
 
@@ -71,7 +75,7 @@ const CommitsContainer = ({ name, sha1, commits, commitsFetch, isLoaded }) => {
         setActive={setActive} />
     </div>
   )
-}
+})
 
 const mapStateToProps = state => {
   return {

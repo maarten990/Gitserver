@@ -54,7 +54,7 @@ export const repoDelete = (name, onSuccess, onFail) => (
   }
 )
 
-export const commitsFetch = (name) => (
+export const commitsFetch = (name, onSuccess) => (
   (dispatch, getState) => {
     dispatch(commitsSetLoading(true))
     apiCall('get_commits', { name: name })
@@ -63,6 +63,7 @@ export const commitsFetch = (name) => (
       .then(commits => {
         dispatch(commitsSet(commits))
         dispatch(commitsSetLoading(false))
+        onSuccess(commits)
       })
   }
 )
