@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Spinner, Tree } from "@blueprintjs/core";
+import { Button, Spinner, Tree } from '@blueprintjs/core'
 import Highlight from 'react-highlight'
 import { usePrevious } from './util.js'
 import { connect } from 'react-redux'
 import { dirtreeFetch, fileContentsFetch } from './redux/actions'
 
-var id = 0;
+var id = 0
 const getId = () => {
-  id += 1;
-  return id - 1;
+  id += 1
+  return id - 1
 }
 
 const formatTree = (tree) => {
@@ -16,18 +16,18 @@ const formatTree = (tree) => {
 
   tree.forEach(entry => {
     if (entry instanceof Object) {
-      const name = Object.keys(entry)[0];
+      const name = Object.keys(entry)[0]
       out.push({
         id: getId(),
         label: name,
         icon: 'folder-close',
-        childNodes: formatTree(entry[name]),
+        childNodes: formatTree(entry[name])
       })
     } else {
       out.push({
         id: getId(),
         label: entry,
-        icon: 'document',
+        icon: 'document'
       })
     }
   })
@@ -35,12 +35,12 @@ const formatTree = (tree) => {
   return out
 }
 
-const TreeView = ({ tree, setRefresh, loadFile}) => {
+const TreeView = ({ tree, setRefresh, loadFile }) => {
   return (
     <Tree
       contents={tree}
-      onNodeCollapse={node => {node.isExpanded = false; setRefresh(true)}}
-      onNodeExpand={node => {node.isExpanded = true; setRefresh(true)}}
+      onNodeCollapse={node => { node.isExpanded = false; setRefresh(true) }}
+      onNodeExpand={node => { node.isExpanded = true; setRefresh(true) }}
       onNodeClick={(node, path, e) => {
         if ('childNodes' in node) {
           node.isExpanded = !node.isExpanded
@@ -61,7 +61,6 @@ const TreeView = ({ tree, setRefresh, loadFile}) => {
     />
   )
 }
-
 
 const DirListing = ({ name, sha1, tree, fileContents, isLoaded, dirtreeFetch, fileContentsFetch }) => {
   const [refresh, setRefresh] = useState(false)
@@ -114,13 +113,13 @@ const mapStateToProps = state => {
   return {
     tree: formatTree(state.dirtree.tree),
     fileContents: state.dirtree.fileContents,
-    isLoaded: !state.dirtree.loading,
+    isLoaded: !state.dirtree.loading
   }
 }
 
 const mapDispatchToProps = {
   dirtreeFetch,
-  fileContentsFetch,
+  fileContentsFetch
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DirListing)

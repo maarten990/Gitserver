@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { withRouter } from 'react-router-dom'
-import { Card, Collapse, Classes, Spinner } from "@blueprintjs/core";
+import { Card, Collapse, Classes, Spinner } from '@blueprintjs/core'
 import { usePrevious } from './util.js'
 import { connect } from 'react-redux'
 import { commitsFetch } from './redux/actions'
@@ -11,7 +11,7 @@ let _Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, se
   return (
     <Card
       className={`commit-message ${isActive ? 'active' : ''}`}
-      interactive={true}
+      interactive
       onClick={() => {
         history.push(`/repo/${repoName}/${sha1}`)
         setActive(sha1)
@@ -26,12 +26,12 @@ let _Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, se
     </Card>
   )
 })
-const Commit = connect(state => {return {darkMode: state.shared.darkMode}}, {})(_Commit)
+const Commit = connect(state => { return { darkMode: state.shared.darkMode } }, {})(_Commit)
 
 const CommitList = ({ repoName, commits, isLoaded, activeCommit, setActive }) => {
   if (isLoaded) {
     return (
-      <div className="commit-list">
+      <div className='commit-list'>
         {commits.map((c, i) => (
           <Commit repoName={repoName} summary={c.summary} body={c.body} sha1={c.sha1} key={i} isActive={activeCommit === c.sha1} setActive={setActive} />
         ))}
@@ -54,7 +54,7 @@ const summarizeCommit = ({ message, sha1 }) => {
 
 const CommitsContainer = withRouter(({ history, name, sha1, commits, commitsFetch, isLoaded }) => {
   const [active, setActive] = useState(sha1)
-  const prevRepoName = usePrevious(name);
+  const prevRepoName = usePrevious(name)
 
   useEffect(() => {
     if (prevRepoName !== name) {
@@ -67,7 +67,7 @@ const CommitsContainer = withRouter(({ history, name, sha1, commits, commitsFetc
   }, [name])
 
   return (
-    <div className="commits-container">
+    <div className='commits-container'>
       <CommitList
         repoName={name}
         commits={commits}
@@ -81,7 +81,7 @@ const CommitsContainer = withRouter(({ history, name, sha1, commits, commitsFetc
 const mapStateToProps = state => {
   return {
     commits: state.commits.commits.map(summarizeCommit),
-    isLoaded: !state.commits.loading,
+    isLoaded: !state.commits.loading
   }
 }
 

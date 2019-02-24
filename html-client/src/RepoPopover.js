@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, FormGroup, InputGroup, Popover, Spinner, Toaster } from "@blueprintjs/core";
+import { Button, FormGroup, InputGroup, Popover, Spinner, Toaster } from '@blueprintjs/core'
 import { connect } from 'react-redux'
 import { reposFetch, repoCreate, repoDelete } from './redux/actions'
 
@@ -20,7 +20,7 @@ const RepoItem = ({ name, handleDelete, deleteVisible, closePopup }) => (
 const RepoList = ({ repositories, isLoaded, handleDelete, deleteVisible, closePopup }) => {
   if (isLoaded) {
     return (
-      <div className="repo-list">
+      <div className='repo-list'>
         {repositories.map((name, i) => <RepoItem name={name} key={i} handleDelete={handleDelete} deleteVisible={deleteVisible} closePopup={closePopup} />)}
       </div>
     )
@@ -30,7 +30,7 @@ const RepoList = ({ repositories, isLoaded, handleDelete, deleteVisible, closePo
 }
 
 const NewRepoForm = ({ handleSubmit, handleChange, handleDelete, deleteVisible }) => (
-  <div className="new-repo">
+  <div className='new-repo'>
     <form onSubmit={handleSubmit}>
       <FormGroup
         helperText='Create a new repository'
@@ -45,7 +45,7 @@ const NewRepoForm = ({ handleSubmit, handleChange, handleDelete, deleteVisible }
 )
 
 const RepoPopover = ({ repositories, isLoaded, reposFetch, repoCreate, repoDelete }) => {
-  const [newRepoName, setNewRepoName] = useState("")
+  const [newRepoName, setNewRepoName] = useState('')
   const [deleteVisible, setDeleteVisible] = useState(false)
   const [popoverIsOpen, setPopoverIsOpen] = useState(false)
   const [firstLoad, setFirstLoad] = useState(true)
@@ -68,7 +68,7 @@ const RepoPopover = ({ repositories, isLoaded, reposFetch, repoCreate, repoDelet
           repoDelete(
             name,
             () => toaster.show({ message: 'Successfully deleted repository', intent: 'success' }),
-            () => toaster.show({ message: 'Could not delete repository', intent: 'warning' }),
+            () => toaster.show({ message: 'Could not delete repository', intent: 'warning' })
           )
           setDeleteVisible(false)
         }} />
@@ -78,12 +78,12 @@ const RepoPopover = ({ repositories, isLoaded, reposFetch, repoCreate, repoDelet
           repoCreate(
             newRepoName,
             () => toaster.show({ message: 'Successfully created repository', intent: 'success' }),
-            () => toaster.show({ message: 'Could not create repository', intent: 'warning' }),
+            () => toaster.show({ message: 'Could not create repository', intent: 'warning' })
           )
         }}
         handleChange={e => {
-            const value = e.target.value
-            setNewRepoName(value)
+          const value = e.target.value
+          setNewRepoName(value)
         }}
         handleDelete={() => setDeleteVisible(!deleteVisible)}
         deleteVisible={deleteVisible}
@@ -107,7 +107,7 @@ const RepoPopover = ({ repositories, isLoaded, reposFetch, repoCreate, repoDelet
 const mapStateToProps = state => {
   return {
     repositories: state.repositories.repositories,
-    isLoaded: !state.repositories.loading,
+    isLoaded: !state.repositories.loading
   }
 }
 

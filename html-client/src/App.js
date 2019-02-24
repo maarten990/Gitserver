@@ -19,17 +19,17 @@ const mapPropsToState = state => {
 }
 
 let ConnectedApp = ({ darkMode }) => (
-    <Router>
-      <div className={`main-layout ${darkMode ? 'bp3-dark' : ''}`}>
-        <Route path='/(repo)?/:name?' component={Topbar} />
-        <Route path='/repo/:name/:sha1?'
-          render={({ match }) => <CommitsContainer name={match.params.name} sha1={match.params.sha1} />} />
-        <Route path='/repo/:name/:sha1'
-          render={({ match }) => <DiffsContainer name={match.params.name} sha1={match.params.sha1} />} />
-        <Route path='/repo/:name/:sha1'
-          render={({ match }) => <DirListing name={match.params.name} sha1={match.params.sha1} />} />
-      </div>
-    </Router>
+  <Router>
+    <div className={`main-layout ${darkMode ? 'bp3-dark' : ''}`}>
+      <Route path='/(repo)?/:name?' component={Topbar} />
+      <Route path='/repo/:name/:sha1?'
+        render={({ match }) => <CommitsContainer name={match.params.name} sha1={match.params.sha1} />} />
+      <Route path='/repo/:name/:sha1'
+        render={({ match }) => <DiffsContainer name={match.params.name} sha1={match.params.sha1} />} />
+      <Route path='/repo/:name/:sha1'
+        render={({ match }) => <DirListing name={match.params.name} sha1={match.params.sha1} />} />
+    </div>
+  </Router>
 )
 
 ConnectedApp = connect(mapPropsToState, {})(ConnectedApp)

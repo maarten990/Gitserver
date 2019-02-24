@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react'
 import Highlight from 'react-highlight'
-import { Spinner } from "@blueprintjs/core";
+import { Spinner } from '@blueprintjs/core'
 import { usePrevious } from './util.js'
 import { connect } from 'react-redux'
 import { diffsFetch } from './redux/actions'
 
 const DiffItem = ({ diff }) => (
-  <Highlight className="diff">
+  <Highlight className='diff'>
     {diff}
   </Highlight>
 )
@@ -14,7 +14,7 @@ const DiffItem = ({ diff }) => (
 const DiffList = ({ diffs, isLoaded }) => {
   if (isLoaded) {
     return (
-      <div className="diff-list">
+      <div className='diff-list'>
         {diffs.map((diff, i) => <DiffItem diff={diff} key={i} />)}
       </div>
     )
@@ -24,7 +24,7 @@ const DiffList = ({ diffs, isLoaded }) => {
 }
 
 const DiffsContainer = ({ name, sha1, diffs, isLoaded, diffsFetch }) => {
-  const prevSha1 = usePrevious(sha1);
+  const prevSha1 = usePrevious(sha1)
 
   useEffect(() => {
     if (prevSha1 !== sha1) {
@@ -42,12 +42,12 @@ const DiffsContainer = ({ name, sha1, diffs, isLoaded, diffsFetch }) => {
 const mapStateToProps = state => {
   return {
     diffs: state.diffs.diffs,
-    isLoaded: !state.diffs.loading,
+    isLoaded: !state.diffs.loading
   }
 }
 
 const mapDispatchToProps = {
-  diffsFetch,
+  diffsFetch
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(DiffsContainer)

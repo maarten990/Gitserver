@@ -14,7 +14,7 @@ export const dirtreeSetLoading = createAction('DIRTREE_SET_LOADING')
 export const dirtreeSetFileContents = createAction('DIRTREE_SET_FILE_CONTENTS')
 export const toggleDarkMode = createAction('TOGGLE_DARK_MODE')
 
-export const reposFetch = () => (
+export const reposFetch = () =>
   (dispatch, getState) => {
     dispatch(repoSetLoading(true))
     apiCall('get_repositories')
@@ -25,9 +25,8 @@ export const reposFetch = () => (
         dispatch(repoSetLoading(false))
       })
   }
-)
 
-export const repoCreate = (name, onSuccess, onFail) => (
+export const repoCreate = (name, onSuccess, onFail) =>
   (dispatch, getState) => {
     apiCall('create_repository', { name: name })
       .then(response => {
@@ -39,9 +38,8 @@ export const repoCreate = (name, onSuccess, onFail) => (
       .catch(() => false)
       .then(success => success ? onSuccess() : onFail())
   }
-)
 
-export const repoDelete = (name, onSuccess, onFail) => (
+export const repoDelete = (name, onSuccess, onFail) =>
   (dispatch, getState) => {
     apiCall('delete_repository', { name: name })
       .then(response => {
@@ -53,9 +51,8 @@ export const repoDelete = (name, onSuccess, onFail) => (
       .catch(() => false)
       .then(success => success ? onSuccess() : onFail())
   }
-)
 
-export const commitsFetch = (name, onSuccess) => (
+export const commitsFetch = (name, onSuccess) =>
   (dispatch, getState) => {
     dispatch(commitsSetLoading(true))
     apiCall('get_commits', { name: name })
@@ -67,9 +64,8 @@ export const commitsFetch = (name, onSuccess) => (
         onSuccess(commits)
       })
   }
-)
 
-export const diffsFetch = (name, sha1) => (
+export const diffsFetch = (name, sha1) =>
   (dispatch, getState) => {
     dispatch(diffsSetLoading(true))
     apiCall('get_diffs', { name: name, sha1: sha1 })
@@ -80,9 +76,8 @@ export const diffsFetch = (name, sha1) => (
         dispatch(diffsSetLoading(false))
       })
   }
-)
 
-export const dirtreeFetch = (name, sha1) => (
+export const dirtreeFetch = (name, sha1) =>
   (dispatch, getState) => {
     dispatch(dirtreeSetLoading(true))
     apiCall('get_dirtree', { name: name, sha1: sha1 })
@@ -93,9 +88,8 @@ export const dirtreeFetch = (name, sha1) => (
         dispatch(dirtreeSetLoading(false))
       })
   }
-)
 
-export const fileContentsFetch = (name, sha1, path) => (
+export const fileContentsFetch = (name, sha1, path) =>
   (dispatch, getState) => {
     dispatch(dirtreeSetLoading(true))
     apiCall('get_filecontents', { name: name, sha1: sha1, path: path })
@@ -106,56 +100,55 @@ export const fileContentsFetch = (name, sha1, path) => (
         dispatch(dirtreeSetLoading(false))
       })
   }
-)
 
 const initialState = {
   repositories: {
     repositories: [],
-    loading: false,
+    loading: false
   },
 
   commits: {
     commits: [],
-    loading: false,
+    loading: false
   },
 
   diffs: {
     diffs: [],
-    loading: false,
+    loading: false
   },
 
   dirtree: {
     tree: [],
     loading: false,
-    fileContents: '',
+    fileContents: ''
   },
 
   shared: {
-    darkMode: true,
-  },
+    darkMode: true
+  }
 }
 
 const repositories = handleActions({
   [reposSet]: (state, { payload }) => ({ ...state, repositories: payload }),
   [repoAdd]: (state, { payload }) => ({ ...state, repositories: state.repositories.concat(payload) }),
   [repoRemove]: (state, { payload }) => ({ ...state, repositories: state.repositories.filter(name => name !== payload) }),
-  [repoSetLoading]: (state, { payload }) => ({ ...state, loading: payload }),
+  [repoSetLoading]: (state, { payload }) => ({ ...state, loading: payload })
 }, initialState.repositories)
 
 const commits = handleActions({
   [commitsSet]: (state, { payload }) => ({ ...state, commits: payload }),
-  [commitsSetLoading]: (state, { payload }) => ({ ...state, loading: payload }),
+  [commitsSetLoading]: (state, { payload }) => ({ ...state, loading: payload })
 }, initialState.commits)
 
 const diffs = handleActions({
   [diffsSet]: (state, { payload }) => ({ ...state, diffs: payload }),
-  [diffsSetLoading]: (state, { payload }) => ({ ...state, loading: payload }),
+  [diffsSetLoading]: (state, { payload }) => ({ ...state, loading: payload })
 }, initialState.diffs)
 
 const dirtree = handleActions({
   [dirtreeSet]: (state, { payload }) => ({ ...state, tree: payload }),
   [dirtreeSetLoading]: (state, { payload }) => ({ ...state, loading: payload }),
-  [dirtreeSetFileContents]: (state, { payload }) => ({ ...state, fileContents: payload }),
+  [dirtreeSetFileContents]: (state, { payload }) => ({ ...state, fileContents: payload })
 }, initialState.dirtree)
 
 const shared = handleActions({
@@ -168,7 +161,7 @@ const gitReducer = (state = initialState, action) => {
     commits: commits(state.commits, action),
     diffs: diffs(state.diffs, action),
     dirtree: dirtree(state.dirtree, action),
-    shared: shared(state.shared, action),
+    shared: shared(state.shared, action)
   }
 }
 

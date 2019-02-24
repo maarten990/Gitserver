@@ -1,5 +1,5 @@
 import React from 'react'
-import { Classes, InputGroup, Navbar, Switch } from "@blueprintjs/core";
+import { Classes, InputGroup, Navbar, Switch } from '@blueprintjs/core'
 import RepoPopover from './RepoPopover'
 import { connect } from 'react-redux'
 import { toggleDarkMode } from './redux/actions'
@@ -14,7 +14,7 @@ const Topbar = ({ match, darkMode, toggleDarkMode }) => {
         <Navbar.Divider />
         <Navbar.Heading>Repository: {match.params.name}</Navbar.Heading>
         <Navbar.Heading>Clone url: </Navbar.Heading>
-        <InputGroup value={`git@${hostname}:${name}`} intent='primary' readOnly={true} />
+        <InputGroup value={`git@${hostname}:${name}`} intent='primary' readOnly />
       </>
     )
   }
