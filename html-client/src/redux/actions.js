@@ -12,6 +12,7 @@ export const diffsSetLoading = createAction('DIFFS_SET_LOADING')
 export const dirtreeSet = createAction('DIRTREE_SET')
 export const dirtreeSetLoading = createAction('DIRTREE_SET_LOADING')
 export const dirtreeSetFileContents = createAction('DIRTREE_SET_FILE_CONTENTS')
+export const toggleDarkMode = createAction('TOGGLE_DARK_MODE')
 
 export const reposFetch = () => (
   (dispatch, getState) => {
@@ -128,6 +129,10 @@ const initialState = {
     loading: false,
     fileContents: '',
   },
+
+  shared: {
+    darkMode: true,
+  },
 }
 
 const repositories = handleActions({
@@ -153,12 +158,17 @@ const dirtree = handleActions({
   [dirtreeSetFileContents]: (state, { payload }) => ({ ...state, fileContents: payload }),
 }, initialState.dirtree)
 
+const shared = handleActions({
+  [toggleDarkMode]: (state, action) => ({ ...state, darkMode: !state.darkMode })
+}, initialState.shared)
+
 const gitReducer = (state = initialState, action) => {
   return {
     repositories: repositories(state.repositories, action),
     commits: commits(state.commits, action),
     diffs: diffs(state.diffs, action),
     dirtree: dirtree(state.dirtree, action),
+    shared: shared(state.shared, action),
   }
 }
 

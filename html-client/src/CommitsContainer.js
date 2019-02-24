@@ -5,12 +5,12 @@ import { usePrevious } from './util.js'
 import { connect } from 'react-redux'
 import { commitsFetch } from './redux/actions'
 
-const Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
+let _Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
   const messageLines = body.split(/\n/)
 
   return (
     <Card
-      className={`commit-message ${isActive ? 'active' : null}`}
+      className={`commit-message ${isActive ? 'active' : ''}`}
       interactive={true}
       onClick={() => {
         history.push(`/repo/${repoName}/${sha1}`)
@@ -26,6 +26,7 @@ const Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, s
     </Card>
   )
 })
+const Commit = connect(state => {return {darkMode: state.shared.darkMode}}, {})(_Commit)
 
 const CommitList = ({ repoName, commits, isLoaded, activeCommit, setActive }) => {
   if (isLoaded) {
