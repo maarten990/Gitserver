@@ -5,7 +5,7 @@ import { usePrevious } from './util.js'
 import { connect } from 'react-redux'
 import { commitsFetch } from './redux/actions'
 
-let _Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
+let Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, setActive }) => {
   const messageLines = body.split(/\n/)
 
   return (
@@ -26,7 +26,6 @@ let _Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, se
     </Card>
   )
 })
-const Commit = connect(state => { return { darkMode: state.shared.darkMode } }, {})(_Commit)
 
 const CommitList = ({ repoName, commits, isLoaded, activeCommit, setActive }) => {
   if (isLoaded) {

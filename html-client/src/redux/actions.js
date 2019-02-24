@@ -1,5 +1,6 @@
 import { apiCall } from '../util.js'
 import { createAction, handleActions } from 'redux-actions'
+import Cookies from 'js-cookie'
 
 export const reposSet = createAction('REPOS_SET')
 export const repoAdd = createAction('REPO_ADD')
@@ -101,7 +102,7 @@ export const fileContentsFetch = (name, sha1, path) =>
       })
   }
 
-const initialState = {
+export let initialState = {
   repositories: {
     repositories: [],
     loading: false
@@ -124,7 +125,14 @@ const initialState = {
   },
 
   shared: {
-    darkMode: true
+    darkMode: Cookies.get('darkMode') === 'true'
+  }
+}
+
+export const cookieMap = {
+  [toggleDarkMode]: {
+    name: 'darkMode',
+    getValue: state => state.shared.darkMode
   }
 }
 
