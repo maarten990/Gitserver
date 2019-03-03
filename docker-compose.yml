@@ -6,7 +6,6 @@ services:
       - "3001:3001"
     volumes:
       - githome:/gitserver/repositories
-    entrypoint: /gitserver/target/release/gitserver
   ssh:
     image: gitserver-ssh
     volumes:

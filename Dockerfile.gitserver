@@ -9,20 +9,11 @@ RUN --mount=type=cache,target=/gitserver/html-client/node_modules \
     yarn build; \
     cp -r build /;
 
-FROM ekidd/rust-musl-builder AS builder
-COPY . ./
-RUN sudo chown -R rust:rust /home/rust
-RUN --mount=type=cache,target=home/rust/src/target \
-    --mount=type=cache,target=/usr/local/cargo/git \
-    --mount=type=cache,target=/usr/local/cargo/registry \
-    cargo build --release; \
-    sudo cp target/x86_64-unknown-linux-musl/release/gitserver /gitserver-bin;
-
 FROM alpine:3.9
-COPY --from=builder /gitserver-bin /gitserver/target/release/gitserver
+COPY ./gitserver /gitserver/gitserver
 COPY --from=yarn-builder /build /gitserver/html-client/build
 WORKDIR /gitserver
 RUN adduser -D -s /bin/ash git; \
     passwd -u git;
 USER git
-CMD ["/gitserver/target/release/gitserver"]
+CMD ["/gitserver/gitserver"]

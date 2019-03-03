@@ -15,18 +15,18 @@ const formatTree = (tree) => {
   let out = []
 
   tree.forEach(entry => {
-    if (entry instanceof Object) {
-      const name = Object.keys(entry)[0]
+    if (entry.hasOwnProperty('children')) {
+      const name = entry.name
       out.push({
         id: getId(),
         label: name,
         icon: 'folder-close',
-        childNodes: formatTree(entry[name])
+        childNodes: formatTree(entry.children)
       })
     } else {
       out.push({
         id: getId(),
-        label: entry,
+        label: entry.name,
         icon: 'document'
       })
     }

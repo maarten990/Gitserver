@@ -82,7 +82,7 @@ export const dirtreeFetch = (name, sha1) =>
   (dispatch, getState) => {
     dispatch(dirtreeSetLoading(true))
     apiCall('get_dirtree', { name: name, sha1: sha1 })
-      .then(response => response.data['/'])
+      .then(response => response.data.children)
       .catch(() => { })
       .then(tree => {
         dispatch(dirtreeSet(tree))
