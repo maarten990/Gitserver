@@ -21,7 +21,7 @@ let Commit = withRouter(({ history, repoName, summary, body, sha1, isActive, set
         {sha1}
       </p>
       <Collapse isOpen={isActive}>
-        {messageLines.map((line, i) => <p key={i}>{line}</p>)}
+        {messageLines.map((line, i) => <span key={i}>{line}<br/></span>)}
       </Collapse>
     </Card>
   )
