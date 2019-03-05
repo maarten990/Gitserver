@@ -27,19 +27,24 @@ type DirtreeNode struct {
 	Children []DirtreeNode `json:"children,omitempty"`
 }
 
-func (node *DirtreeNode) AddFromStrings(names []string) {
+func AddFromStrings(root []DirtreeNode, names []string) []DirtreeNode {
 	if len(names) > 0 {
 		name := names[0]
-		for _, child := range node.Children {
-			if name == child.Name {
-				child.AddFromStrings(names[1:])
-				return
+		var i int
+		for i = 0; i < len(root); i++ {
+			if name == root[i].Name {
+				break
 			}
 		}
-		newNode := DirtreeNode{name, []DirtreeNode{}}
-		newNode.AddFromStrings(names[1:])
-		node.Children = append(node.Children, newNode)
+
+		if i == len(root) {
+			root = append(root, DirtreeNode{Name: name})
+		}
+
+		root[i].Children = AddFromStrings(root[i].Children, names[1:])
 	}
+
+	return root
 }
 
 func getRepositories() ([]string, error) {
@@ -139,7 +144,7 @@ func getDirtree(name []byte, sha1 [20]byte) (DirtreeNode, error) {
 			continue
 		}
 
-		root.AddFromStrings(strings.Split(name, "/"))
+		root.Children = AddFromStrings(root.Children, strings.Split(name, "/"))
 	}
 
 	return root, nil
